@@ -20,3 +20,13 @@ def validate(serializerCls):
             return view_func(*a, **k)
         return inner
     return dec
+
+def list_route(func):
+
+  @wraps(func)
+  def inner(*a, **k):
+    return func(*a, **k)
+
+  inner._is_list_route = True
+
+  return inner
