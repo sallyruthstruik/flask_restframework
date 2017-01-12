@@ -1,7 +1,7 @@
 import six
 
 
-from flask.ext.validator.serializer.base_serializer import BaseSerializer, _BaseSerializerMetaClass
+from flask_validator.serializer.base_serializer import BaseSerializer, _BaseSerializerMetaClass
 
 
 from ..utils import mongoengine_model_meta as model_meta

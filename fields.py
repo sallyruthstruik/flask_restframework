@@ -2,7 +2,7 @@ import datetime
 
 from flask import json
 
-from flask.ext.validator.exceptions import ValidationError
+from flask_validator.exceptions import ValidationError
 from mongoengine import fields as db
 
 __author__ = 'stas'
@@ -197,7 +197,7 @@ class ForeignKeyField(BaseField):
                     outField = None
 
         if out and outField:
-            from flask.ext.validator.utils import mongoengine_model_meta
+            from flask_validator.utils import mongoengine_model_meta
             return mongoengine_model_meta.FIELD_MAPPING[outField.__class__].from_mongoengine_field(
                 outField).to_python(out)
 
@@ -219,6 +219,9 @@ class ListField(BaseField):
 class EmbeddedField(BaseField):
     def to_python(self, value):
         # TODO: Use nested serializer
-        if value:
+
+        if value and isinstance(value, db.EmbeddedDocument):
             return json.loads(value.to_json())
+
+        return value
 

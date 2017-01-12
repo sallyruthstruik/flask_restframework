@@ -1,4 +1,4 @@
-from flask.ext.validator.resource import BaseResource
+from flask_validator.resource import BaseResource
 
 
 class BaseRouter(object):
