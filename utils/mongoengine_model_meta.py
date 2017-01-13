@@ -12,7 +12,8 @@ FIELD_MAPPING = {
     db.IntField: fields.IntegerField,
     db.URLField: fields.URLField,
     db.EmbeddedDocumentListField: fields.ListField,
-    db.ListField: fields.ListField
+    db.ListField: fields.ListField,
+    db.DictField: fields.DictField
 }
 
 def get_fields(model):

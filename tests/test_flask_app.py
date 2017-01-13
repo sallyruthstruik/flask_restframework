@@ -13,6 +13,7 @@ from flask.helpers import url_for
 from flask.views import View
 from mongoengine import fields as db
 
+from flask.ext.validator.decorators import list_route, detail_route
 from flask_validator import fields
 from flask_validator.adapters import MongoEngineQuerysetAdapter
 from flask_validator.decorators import validate
@@ -88,6 +89,14 @@ class SimpleFlaskAppTest(unittest.TestCase):
             def delete(self, request):
                 return "DELETE"
 
+            @list_route(methods=["GET", "POST"])
+            def listroute(self, request):
+                return "LIST"
+
+            @detail_route(methods=["GET", "POST"])
+            def detailroute(self, request, pk):
+                return "detail"
+
         self.assertSetEqual(
             set(Resource.get_allowed_methods()), {"get", "post", "put", "patch", "delete"}
         )
@@ -97,6 +106,21 @@ class SimpleFlaskAppTest(unittest.TestCase):
         for method in ["get", "post", "put", "patch", "delete"]:
             resp = getattr(self.client, method)("/test")
             self.assertEqual(resp.data.decode("utf-8"), method.upper())
+
+        for method in ["GET", "POST"]:
+            resp = getattr(self.client, method.lower())("/test/listroute")
+            self.assertEqual(resp.status_code, 200)
+            self.assertEqual(resp.data.decode("utf-8"), "LIST")
+
+        for method in ["GET", "POST"]:
+            resp = getattr(self.client, method.lower())("/test/detailroute/1")
+            self.assertEqual(resp.status_code, 200)
+            self.assertEqual(resp.data.decode("utf-8"), "detail")
+
+            resp = self.client.get("/test/detailroute")
+            self.assertEqual(resp.status_code, 404)
+
+
 
     def testRoutingWithBluePrint(self):
 
@@ -136,6 +160,8 @@ class SimpleFlaskAppTest(unittest.TestCase):
             embedded = db.EmbeddedDocumentField(ED)
             listf = db.EmbeddedDocumentListField(ED)
 
+            dictf = db.DictField()
+
         Model.objects.delete()
 
         ins = Model.objects.create(
@@ -144,7 +170,8 @@ class SimpleFlaskAppTest(unittest.TestCase):
             f2=True,
             f3="1",
             embedded={"value": "123"},
-            listf=[{"value": "234"}]
+            listf=[{"value": "234"}],
+            dictf={"key": "value"}
         )
 
         Model.objects.create(
@@ -172,6 +199,8 @@ class SimpleFlaskAppTest(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         data = self._parse(resp.data)
         self.assertEqual(len(data["results"]), 2)
+        item = data["results"][0]
+        self.assertEqual(item["dictf"], {"key": "value"})
 
         # get one object
         resp = self.client.get("/test/{}".format(ins.id))
@@ -193,8 +222,9 @@ class SimpleFlaskAppTest(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         data = self._parse(resp.data)
         results = data["results"]
+
         self.assertEqual(results[0]["embedded"], {"value": "123"})
-        self.assertEqual(results[0]["listf"], [{"value": "123"}])
+        self.assertEqual(results[0]["listf"], [{"value": "234"}])
 
         self.assertEqual(len(data["results"]), 10)
 

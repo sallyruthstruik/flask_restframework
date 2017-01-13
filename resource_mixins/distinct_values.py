@@ -1,8 +1,23 @@
+from flask import jsonify
+from mongoengine.queryset.queryset import QuerySet
+
 from flask.ext.validator.decorators import list_route
 
 
 class DistinctValuesMixin:
 
-    @list_route
+    distinct_fields = None
+
+    @list_route(methods=["GET"])
     def distinct(self, request):
-      return "OK"
+        assert self.distinct_fields, "You should set list of allowed fields"
+        qs = self.get_queryset()
+
+        field = request.args.get("field")
+
+        if field not in self.distinct_fields:
+            return jsonify([]), 400
+
+        assert isinstance(qs, QuerySet)
+
+        return qs.distinct(field)

@@ -1,3 +1,5 @@
+from flask.globals import request
+
 from flask_validator.resource import BaseResource
 
 
@@ -28,22 +30,76 @@ class DefaultRouter(BaseRouter):
         * url + "/<id>" with methods from viewCls.get_allowed_object_methods()
 
     """
+
+    METHODS = [
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE",
+        "HEAD",
+        "OPTIONS"
+    ]
+
+
+    def _get_list_handler(self, request, viewCls):
+        "returns handler for list route"
+
+    def _get_route_handler(self, func, viewCls):
+
+        def handler(*a, **k):
+            return func(viewCls(request), request, *a, **k)
+
+        return handler
+
+    def _iter_methods(self, viewCls, processed):
+
+        for key, value in viewCls.__dict__.items():
+            if key in processed:
+                continue
+
+            processed.append(key)
+
+            yield (key, value)
+
+        for parentCls in viewCls.__bases__:
+            yield from self._iter_methods(parentCls, processed)
+
     def register(self, url, viewCls, basename):
         if issubclass(viewCls, BaseResource):
 
-            methods = viewCls.get_allowed_methods()
-            objMethods = viewCls.get_allowed_object_methods()
+            listMethods = []
+            detailMethods = []
 
-            if methods:
+            for key, value in self._iter_methods(viewCls, []):
+                if callable(value):
+                    if key.upper() in self.METHODS:
+                        # simple list route
+                        listMethods.append(key)
+                    elif key.replace("_object", "").upper() in self.METHODS:
+                        detailMethods.append(key.replace("_object", ""))
+
+                    else:
+                        if hasattr(value, "_is_view_function"):
+                            self.app.add_url_rule(
+                                url+value._route_part,
+                                basename+"-{}".format(value._name_part),
+                                self._get_route_handler(value, viewCls),
+                                methods=value._methods
+                            )
+
+
+            if listMethods:
                 self.app.add_url_rule(
                     url, basename, viewCls.as_view(basename),
-                    methods=methods
+                    methods=listMethods
                 )
-            if objMethods:
+
+            if detailMethods:
                 detailBasename = basename + "-detail"
                 self.app.add_url_rule(
                     url + "/<pk>", detailBasename, viewCls.as_view(
                         detailBasename, suffix="_object"
-                    ), methods=objMethods
+                    ), methods=detailMethods
                 )
 

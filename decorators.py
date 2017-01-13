@@ -21,12 +21,40 @@ def validate(serializerCls):
         return inner
     return dec
 
-def list_route(func):
+def list_route(methods=None):
+    methods = methods or ["GET"]
+    def dec(func):
 
-  @wraps(func)
-  def inner(*a, **k):
-    return func(*a, **k)
+        @wraps(func)
+        def inner(*a, **k):
+            return func(*a, **k)
 
-  inner._is_list_route = True
+        inner._is_view_function = True
+        inner._methods = methods
+        inner._name_part = func.__name__
+        inner._route_part = "/{}".format(inner._name_part)
 
-  return inner
+        return inner
+
+    return dec
+
+def detail_route(methods=None):
+
+    methods = methods or ["POST"]
+
+    def dec(func):
+
+        @wraps(func)
+        def inner(*a, **k):
+            return func(*a, **k)
+
+        inner._is_view_function = True
+        inner._methods = methods
+        inner._name_part = func.__name__
+        inner._route_part = "/{}/<pk>".format(inner._name_part)
+
+        return inner
+
+    return dec
+
+

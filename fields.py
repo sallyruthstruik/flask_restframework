@@ -225,3 +225,11 @@ class EmbeddedField(BaseField):
 
         return value
 
+
+class DictField(BaseField):
+
+    def to_python(self, value):
+        if value:
+            return dict(value)
+
+        return value
