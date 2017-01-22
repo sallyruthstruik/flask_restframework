@@ -6,6 +6,6 @@ install: "pip install -r requirements_dev.txt"
 services:
   - mongodb
 script:
-  - nosetests --with-coverage
+  - nosetests --with-coverage --cover-package=flask_restframework
 after_success:
   - codecov
