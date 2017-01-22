@@ -63,7 +63,8 @@ class DefaultRouter(BaseRouter):
             yield (key, value)
 
         for parentCls in viewCls.__bases__:
-            yield from self._iter_methods(parentCls, processed)
+            for item in self._iter_methods(parentCls, processed):
+                yield item
 
     def register(self, url, viewCls, basename):
         if issubclass(viewCls, BaseResource):

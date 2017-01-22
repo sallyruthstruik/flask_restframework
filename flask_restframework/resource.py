@@ -45,8 +45,8 @@ class BaseResourceMetaClass(type):
         return type.__new__(cls, name, bases, attrs)
 
 
-class BaseResource(object, metaclass=BaseResourceMetaClass):
-    __metaclass__ = BaseResourceMetaClass
+@six.add_metaclass(BaseResourceMetaClass)
+class BaseResource(object):
     _allowed_methods = None     #list of allowed methods for this resource
     _allowed_object_methods = None  #list of allowed OBJECT methods for this resource
 
