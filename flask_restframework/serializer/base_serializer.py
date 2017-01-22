@@ -20,8 +20,6 @@ class _BaseSerializerMetaClass(type):
 
     @classmethod
     def _get_declared_fields(cls, bases, attrs):
-
-
         fields = [(field_name, attrs.pop(field_name))
                   for field_name, obj in list(attrs.items())
                   if isinstance(obj, BaseField)]
@@ -138,7 +136,6 @@ class BaseSerializer:
         :param validated_data: data after validation
         :return: updated instance
         """
-
 
     def validate(self):
         """

@@ -13,7 +13,7 @@ from flask.helpers import url_for
 from flask.views import View
 from mongoengine import fields as db
 
-from flask.ext.validator.decorators import list_route, detail_route
+from flask_restframework.decorators import list_route, detail_route
 from flask_restframework import fields
 from flask_restframework.adapters import MongoEngineQuerysetAdapter
 from flask_restframework.decorators import validate

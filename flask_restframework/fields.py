@@ -176,7 +176,9 @@ class MethodField(BaseField):
 
 
 class ForeignKeyField(BaseField):
-
+    """
+    Fields represent ForeignKeyRelation which can be getted with __ notation.
+    """
     def __init__(self, document_fieldname=None):
         super(ForeignKeyField, self).__init__(read_only=True)
         self.document_fieldname = document_fieldname
@@ -216,7 +218,7 @@ class ListField(BaseField):
         return list(map(embedded.to_python, value))
 
 
-class EmbeddedField(BaseField):
+class EmbeddedField(ForeignKeyField):
     def to_python(self, value):
         # TODO: Use nested serializer
 
