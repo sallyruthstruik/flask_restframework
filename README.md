@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/sallyruthstruik/flask_restframework.svg?branch=master)](https://travis-ci.org/sallyruthstruik/flask_restframework)
 [![codecov](https://codecov.io/gh/sallyruthstruik/flask_restframework/branch/master/graph/badge.svg)](https://codecov.io/gh/sallyruthstruik/flask_restframework)
 
-Minimalistic and usage-easy RESTful framework for Flask.
+Minimalistic and usage-easy RESTful framework for Flask. Like Django Rest Framework for Flask
 
 This project allows you to write serializers/model serializers and REST resources easily.
 This project interface was inspired by Django-rest-framework (https://github.com/tomchristie/django-rest-framework)
