@@ -7,7 +7,7 @@ from mongoengine import fields as db
 
 __author__ = 'stas'
 
-class BaseField:
+class BaseField(object):
     """
     Base Field
     """
