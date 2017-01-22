@@ -1,7 +1,7 @@
 from flask import jsonify
 from mongoengine.queryset.queryset import QuerySet
 
-from flask.ext.validator.decorators import list_route
+from flask_restframework.decorators import list_route
 
 
 class DistinctValuesMixin:

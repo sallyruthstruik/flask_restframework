@@ -12,7 +12,7 @@ This project interface was inspired by Django-rest-framework (https://github.com
 ## Installation
 
 For installation run:
-`pip install git+https://github.com/sallyruthstruik/flask_restframework`
+`pip install flask_restframework`
 
 Example of usage you can see here: https://github.com/sallyruthstruik/angular2_logviewer/tree/master/server
 

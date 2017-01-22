@@ -9,3 +9,6 @@ script:
   - nosetests --with-coverage --cover-package=flask_restframework
 after_success:
   - codecov
+deploy:
+  provider: pypi
+  user:

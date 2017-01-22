@@ -3,3 +3,9 @@ __pycache__
 *.pyc
 *.orig
 .idea
+.pypirc
+build
+dist
+*.egg-info
+*.log
+.cache
