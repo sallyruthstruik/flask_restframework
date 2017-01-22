@@ -14,15 +14,15 @@ from flask.views import View
 from mongoengine import fields as db
 
 from flask.ext.validator.decorators import list_route, detail_route
-from flask_validator import fields
-from flask_validator.adapters import MongoEngineQuerysetAdapter
-from flask_validator.decorators import validate
-from flask_validator.model_resource import ModelResource
-from flask_validator.pagination import DefaultPagination
-from flask_validator.resource import BaseResource, BaseResourceMetaClass
-from flask_validator.router import DefaultRouter
-from flask_validator.serializer import BaseSerializer
-from flask_validator.serializer.model_serializer import ModelSerializer
+from flask_restframework import fields
+from flask_restframework.adapters import MongoEngineQuerysetAdapter
+from flask_restframework.decorators import validate
+from flask_restframework.model_resource import ModelResource
+from flask_restframework.pagination import DefaultPagination
+from flask_restframework.resource import BaseResource, BaseResourceMetaClass
+from flask_restframework.router import DefaultRouter
+from flask_restframework.serializer import BaseSerializer
+from flask_restframework.serializer.model_serializer import ModelSerializer
 
 
 class SimpleFlaskAppTest(unittest.TestCase):

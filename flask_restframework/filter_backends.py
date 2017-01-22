@@ -58,7 +58,8 @@ class JsonFilterBackend(BaseBackend):
 
         .filter(__raw__={"name": "blablabla"})
 
-    You can manage filter logig with Resource attribute update_json_filter which accepts (json_filter)->new_json_filter
+    You can manage filter logig with Resource attribute update_json_filter which accepts
+    (json_filter)->new_json_filter
 
     """
 

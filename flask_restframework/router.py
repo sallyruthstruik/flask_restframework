@@ -1,6 +1,6 @@
 from flask.globals import request
 
-from flask_validator.resource import BaseResource
+from flask_restframework.resource import BaseResource
 
 
 class BaseRouter(object):

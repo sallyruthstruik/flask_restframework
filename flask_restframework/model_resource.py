@@ -2,12 +2,12 @@ import six
 from flask import jsonify
 from flask.globals import current_app
 
-from flask_validator.filter_backends import BaseBackend
-from flask_validator.resource import BaseResource, BaseResourceMetaClass
+from flask_restframework.filter_backends import BaseBackend
+from flask_restframework.resource import BaseResource, BaseResourceMetaClass
 
 
 # TODO: Need usage, comment
-from flask_validator.serializer.model_serializer import ModelSerializer
+from flask_restframework.serializer.model_serializer import ModelSerializer
 
 
 

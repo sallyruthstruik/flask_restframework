@@ -1,4 +1,4 @@
-from flask_validator.exceptions import ValidationError
+from flask_restframework.exceptions import ValidationError
 
 __author__ = 'stas'
 

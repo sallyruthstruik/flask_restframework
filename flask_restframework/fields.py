@@ -2,7 +2,7 @@ import datetime
 
 from flask import json
 
-from flask_validator.exceptions import ValidationError
+from flask_restframework.exceptions import ValidationError
 from mongoengine import fields as db
 
 __author__ = 'stas'
@@ -40,7 +40,7 @@ class BaseField:
 
     def run_validate(self, validator, value):
         """
-        :type validator: flask_validator.serializer.BaseSerializer
+        :type validator: flask_restframework.serializer.BaseSerializer
 
         Should return value which will be passed in BaseValidator.cleaned_data
         """
@@ -197,7 +197,7 @@ class ForeignKeyField(BaseField):
                     outField = None
 
         if out and outField:
-            from flask_validator.utils import mongoengine_model_meta
+            from flask_restframework.utils import mongoengine_model_meta
             return mongoengine_model_meta.FIELD_MAPPING[outField.__class__].from_mongoengine_field(
                 outField).to_python(out)
 
@@ -230,6 +230,9 @@ class DictField(BaseField):
 
     def to_python(self, value):
         if value:
-            return dict(value)
+            try:
+                return dict(value)
+            except:
+                return value
 
         return value

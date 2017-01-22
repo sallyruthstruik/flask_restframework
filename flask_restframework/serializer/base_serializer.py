@@ -3,9 +3,9 @@ import six as six
 from mongoengine.queryset.queryset import QuerySet
 from werkzeug.exceptions import BadRequest
 
-from flask_validator.fields import ForeignKeyField
+from flask_restframework.fields import ForeignKeyField
 
-from flask_validator.fields import BaseField
+from flask_restframework.fields import BaseField
 from ..exceptions import ValidationError
 
 __author__ = 'stas'
@@ -154,7 +154,7 @@ class BaseSerializer:
 
         :return: True if validation succeeded, False else
         """
-        from flask_validator import fields
+        from flask_restframework import fields
 
         errors = {}
 

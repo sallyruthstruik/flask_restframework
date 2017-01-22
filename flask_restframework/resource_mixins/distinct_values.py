@@ -20,4 +20,4 @@ class DistinctValuesMixin:
 
         assert isinstance(qs, QuerySet)
 
-        return qs.distinct(field)
+        return jsonify([item for item in qs.distinct(field)])

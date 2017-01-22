@@ -1,6 +1,6 @@
 import six
 from mongoengine import fields as db
-from flask_validator import fields
+from flask_restframework import fields
 
 FIELD_MAPPING = {
     db.ObjectIdField: fields.StringField,

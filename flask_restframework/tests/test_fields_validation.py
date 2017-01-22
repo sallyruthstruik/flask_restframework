@@ -1,8 +1,8 @@
 import datetime
 import unittest
 
-from flask_validator import fields
-from flask_validator.serializer import BaseSerializer
+from flask_restframework import fields
+from flask_restframework.serializer import BaseSerializer
 
 
 class TestFieldsValidation(unittest.TestCase):
