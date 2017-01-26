@@ -13,6 +13,8 @@ class DistinctValuesMixin:
         assert self.distinct_fields, "You should set list of allowed fields"
         qs = self.get_queryset()
 
+        qs = self.filter_qs(qs)
+
         field = request.args.get("field")
 
         if field not in self.distinct_fields:
