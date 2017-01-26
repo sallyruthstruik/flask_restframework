@@ -9,7 +9,3 @@ script:
   - nosetests --with-coverage --cover-package=flask_restframework
 after_success:
   - codecov
-deploy:
-  provider: pypi
-  user: "sallyruthstruik"
-  password: "VXNdBU5lRSz/SglwK8sxwyHTFXYbc5UQr5SI5AQc25hPwebYhm1CGhdeX2INOOXaD7L3kfgGVaTfERwNRIQ/mIQRCNY0Kp/OGT8SVbkwI7yA/iCgtN9Jg8v71THiPQ6M0+erSJN8zRFaGtJQNz7v1chZd5QYjCUz8F/caw0fNY0wtABX7YGPpjC2YcMrlijOgCIP6nhPSKYQcMSfWmII92ekR7hkLJediX3Ysxr4e+VQos+QSGf3PFqIOwJewzhaOhZ1sWonQjSow5en5JhnIbiVzPaLwvD5VLqvZdtYK+1e35gpYiMruqy1mxhgzEjTpuqasQQfcbXLJGblsLPYxbXI+F9TA2rls7aRiVhErx+KBVIcAfmJ0pFGqDiCKZNRnt5fGp+uAKjSy1htkrm8GSZ4dZp8stpCoTV5aGTMD8npR6ROymw9dEYST5atvE5PP5hBPfNxiYHfUKANDtguSVh71EIFlhtvqAgRYK0Rb1P//PDN4bboNqQKP3Y5n9nvpa/cU89pp2kb9i3KjJ/wM+xaMgRLIY/NHJ+2dPy5EmNsSik1Hjj7KDuXREXntjkZu7SysvOOP5+ZBZkJSKhZG9SHx3CZOHEgaEBNjTzDJ+ja/4yLEv+srmR6og6qwtd/y+fFQIHYhCR5lYSSnW6h4tKoHQ4d8pKBDB6r3n+b3hs="
