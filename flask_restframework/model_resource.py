@@ -1,3 +1,5 @@
+import copy
+
 import six
 from flask import jsonify
 from flask.globals import current_app
@@ -137,6 +139,8 @@ class ModelResource(BaseResource):
 
         instance = self.get_instance(pk)
 
+        oldInstance = copy.deepcopy(instance)
+
         validated_data = {
             key: value
             for key, value in six.iteritems(serializer.cleaned_data)
@@ -145,7 +149,13 @@ class ModelResource(BaseResource):
 
         updatedInstance = serializer.update(instance, validated_data=validated_data)
 
+        self.after_update(oldInstance, updatedInstance, validated_data)
+
         return jsonify(self.serializer_class(updatedInstance).to_python())
+
+    def after_update(self, oldInstance, updatedInstance, validated_data):
+        "Will be called after updating existed instance"
+        pass
 
     def delete_object(self, request, pk):
         instance = self.get_instance(pk)

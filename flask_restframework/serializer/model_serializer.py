@@ -51,7 +51,10 @@ class ModelSerializer(BaseSerializer):
         "Performs update for instance. Returns instance with updated fields"
 
         for key, value in six.iteritems(validated_data):
-            setattr(instance, key, value)
+            try:
+                setattr(instance, key, value)
+            except Exception as e:
+                print(key, value)
 
         instance.save()
 

@@ -74,6 +74,7 @@ class BaseField(object):
         """
         raise NotImplementedError()
 
+    # TODO: validate MUST be implemented!
     def validate(self, validator, value):
         pass
 
@@ -123,6 +124,8 @@ class URLField(BaseField):
     def to_python(self, value):
         return value
 
+    def validate(self, validator, value):
+        return value
 
 class DateTimeField(BaseField):
 
