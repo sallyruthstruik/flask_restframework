@@ -102,7 +102,6 @@ class ModelResource(BaseResource):
 
         return qs
 
-
     def get(self, request):
         qs = self.get_queryset()
 
@@ -121,6 +120,15 @@ class ModelResource(BaseResource):
             data = self.serializer_class(qs).to_python()
 
         return jsonify(data)
+
+    def post(self, request):
+        serializer = self.serializer_class(request.form)
+        if not serializer.validate():
+            out = jsonify(serializer.errors)
+            out.status_code = 400
+            return out
+        obj = serializer.create(serializer.cleaned_data)
+        return jsonify(self.serializer_class(obj).to_python())
 
     def get_object(self, request, pk):
         obj = self.get_instance(pk)

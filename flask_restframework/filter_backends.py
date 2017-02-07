@@ -11,6 +11,7 @@ class BaseBackend:
     def filter(self):
         raise NotImplementedError
 
+
 class OrderingBackend(BaseBackend):
     """
     Allows ordering with GET parameter.
@@ -47,6 +48,7 @@ class OrderingBackend(BaseBackend):
 
         return self.qs
 
+
 class JsonFilterBackend(BaseBackend):
     """
     Allows custom filtration with json_filter GET parameter.
@@ -74,5 +76,31 @@ class JsonFilterBackend(BaseBackend):
             json_filter = self.resource.__class__.update_json_filter(json_filter)
 
         self.qs = self.qs.filter(__raw__=json_filter)
+
+        return self.qs
+
+
+class SearchFilterBackend(BaseBackend):
+    """
+    Allows custom filtration with search GET parameter.
+    For example:
+
+        GET ?search="search text"
+
+    will filter queryset in this way:
+
+        .filter(__raw__={"$text": {"$search": search_text}})
+
+    """
+
+    def filter(self):
+
+        try:
+            search_text = self.request.args.get("search")
+        except:
+            search_text = ""
+
+        if search_text:
+            self.qs = self.qs.filter(__raw__={"$text": {"$search": search_text}})
 
         return self.qs
