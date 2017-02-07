@@ -69,7 +69,6 @@ class ModelSerializer(BaseSerializer):
                 setattr(instance, key, value)
             except Exception as e:
                 print(key, value)
-        print(instance)
         instance.save()
 
         return instance
