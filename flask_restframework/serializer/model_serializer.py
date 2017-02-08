@@ -62,16 +62,7 @@ class ModelSerializer(BaseSerializer):
 
     def create(self, validated_data):
         "Performs create for instance. Returns created instance"
-        instance = self.get_model()()
-
-        for key, value in six.iteritems(validated_data):
-            try:
-                setattr(instance, key, value)
-            except Exception as e:
-                print(key, value)
-        instance.save()
-
-        return instance
+        return self.get_model().objects.create(**validated_data)
 
 
 
