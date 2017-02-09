@@ -237,8 +237,9 @@ class ForeignKeyField(BaseRelatedField):
 
     Goal of this field - to allow get inner/related data with __ notation.
     """
-    def __init__(self, **k):
+    def __init__(self, document_fieldname, **k):
         k["read_only"] = True
+        k["document_fieldname"] = document_fieldname
         super(ForeignKeyField, self).__init__(**k)
 
     def to_python(self, value):

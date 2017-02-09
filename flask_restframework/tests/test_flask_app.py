@@ -202,6 +202,7 @@ class SimpleFlaskAppTest(unittest.TestCase):
         )
 
         class S(ModelSerializer):
+            title = fields.ForeignKeyField("base__title")
             class Meta:
                 model = Model
                 fk_fields = ("base__title", )
@@ -219,6 +220,8 @@ class SimpleFlaskAppTest(unittest.TestCase):
         self.assertEqual(len(data["results"]), 2)
         item = data["results"][0]
         self.assertEqual(item["dictf"], {"key": "value"})
+        self.assertEqual(item["title"], "1")
+        self.assertEqual(item["base__title"], "1")
 
         # get one object
         resp = self.client.get("/test/{}".format(ins.id))
