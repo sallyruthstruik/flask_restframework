@@ -13,6 +13,7 @@ from flask.helpers import url_for
 from flask.views import View
 from mongoengine import fields as db
 
+from flask_restframework.validators import RegexpValidator
 from flask_restframework.decorators import list_route, detail_route
 from flask_restframework import fields
 from flask_restframework.adapters import MongoEngineQuerysetAdapter
@@ -50,6 +51,23 @@ class SimpleFlaskAppTest(unittest.TestCase):
     def _parse(self, resp):
         resp = resp.decode("utf-8")
         return json.loads(resp)
+
+    def test_validation_mongoengine_will_work_with_model_serializer(self):
+
+        class Doc(db.Document):
+            value = db.StringField(validation=RegexpValidator(r"\d+", message="Bad value").for_mongoengine())
+
+        Doc.drop_collection()
+
+        class Serializer(ModelSerializer):
+            class Meta:
+                model = Doc
+
+        Doc.objects.create(value="123")
+
+        s = Serializer(data={"value": "asd"})
+        self.assertEqual(s.validate(), False)
+        self.assertEqual(s.errors, {"value": ["Bad value"]})
 
     def test_resource_decorator(self):
 

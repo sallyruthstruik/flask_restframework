@@ -6,7 +6,6 @@ from flask.globals import request
 
 def validate(serializerCls):
     def dec(view_func):
-
         @wraps(view_func)
         def inner(*a, **k):
             s = serializerCls(request.json)

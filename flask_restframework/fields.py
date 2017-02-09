@@ -2,10 +2,12 @@ import datetime
 
 from flask import json
 
+from flask_restframework.validators import BaseValidator
 from flask_restframework.exceptions import ValidationError
 from mongoengine import fields as db
 
 __author__ = 'stas'
+
 
 class BaseField(object):
     """
@@ -16,13 +18,21 @@ class BaseField(object):
 
     @classmethod
     def from_mongoengine_field(cls, mongoEngineField):
-        try:
-            return cls(
-                required=mongoEngineField.required,
-                default=mongoEngineField.default
-            )
-        except:
-            print("ERROR")
+        validators = None
+        if mongoEngineField.validation:
+
+            if hasattr(mongoEngineField.validation, "original_validator"):
+                validator_adapter = mongoEngineField.validation.original_validator
+            else:
+                validator_adapter = lambda serializer, value: mongoEngineField.validation(value)
+
+            validators = [validator_adapter]
+
+        return cls(
+            required=mongoEngineField.required,
+            default=mongoEngineField.default,
+            validators=validators
+        )
 
     def __init__(
             self,

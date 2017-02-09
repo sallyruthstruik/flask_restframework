@@ -1,6 +1,7 @@
 import datetime
 import unittest
 
+from flask_restframework.validators import RegexpValidator
 from flask_restframework.serializer.model_serializer import ModelSerializer
 from flask_restframework import fields
 from flask_restframework.serializer import BaseSerializer
@@ -10,6 +11,7 @@ class TestFieldsValidation(unittest.TestCase):
 
     def setUp(self):
         pass
+
 
     def test_model_serializer_required(self):
 

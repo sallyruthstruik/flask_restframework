@@ -8,48 +8,10 @@ from mongoengine.errors import DoesNotExist
 from flask_restframework.exceptions import NotFound
 from flask_restframework.filter_backends import BaseBackend
 from flask_restframework.resource import BaseResource, BaseResourceMetaClass
-
-
-# TODO: Need usage, comment
 from flask_restframework.serializer.model_serializer import ModelSerializer
 
 
-
-class ModelResource(BaseResource):
-    """
-    Generic resource for CRUD on mongoengine models.
-
-    Simple usage example::
-
-        >>> class Model(db.Document):
-        >>>
-        >>>     f1 = db.StringField()
-        >>>     f2 = db.BooleanField()
-        >>>     f3 = db.StringField()
-        >>>
-        >>> class S(ModelSerializer):
-        >>>     class Meta:
-        >>>         model = Model
-        >>>
-        >>> class ModelRes(ModelResource):
-        >>>     serializer_class = S
-        >>>     queryset = Model.objects.all()
-        >>>
-        >>> router = DefaultRouter(app)
-        >>> router.register("/test", ModelRes, "modelres")
-
-    In this configuration will be allowed next HTTP methods:
-
-        * GET /test returns::
-
-            [{'f1': '1', 'f2': True, 'f3': '1', 'id': '5864db5d32105b50fa02162b'},
-             {'f1': '2', 'f2': True, 'f3': '2', 'id': '5864db5d32105b50fa02162c'}]
-
-        * GET /test/5864db5d32105b50fa02162b returns::
-
-            {'f1': '1', 'f2': True, 'f3': '1', 'id': '5864e2a332105b5a350b99bc'}
-
-    """
+class GenericResource(BaseResource):
     __metaclass__ = BaseResourceMetaClass
 
     serializer_class = None
@@ -57,12 +19,12 @@ class ModelResource(BaseResource):
     pagination_class = None
     filter_backends = None  #list of BaseBackend subclasses for filtering GET output
 
-
     def __init__(self, request):
-        super(ModelResource, self).__init__(request)
+        super(GenericResource, self).__init__(request)
 
         if not self.serializer_class:
             raise ValueError("serializer_class is required")
+
         if self.get_queryset() is None:
             raise ValueError("queryset is required")
 
@@ -107,6 +69,19 @@ class ModelResource(BaseResource):
 
         return qs
 
+    def get_data(self, request):
+        "Returns json body data from request"
+        return request.json
+
+
+class ListObjectsMixin:
+    """
+    Allows you to add GET endpoint for resource:
+
+        GET /yourresource
+
+    Returns array of (paginated if set pagination_class) elements
+    """
     def get(self, request):
         qs = self.get_queryset()
 
@@ -126,6 +101,12 @@ class ModelResource(BaseResource):
 
         return jsonify(data)
 
+
+class CreateMixin:
+    def after_create(self, instance, validated_data):
+        "Will be create after creating new instance"
+        pass
+
     def post(self, request):
         data = self.get_data(request)
 
@@ -142,9 +123,17 @@ class ModelResource(BaseResource):
 
         return jsonify(self.serializer_class(instance).to_python())
 
+
+class RetrieveMixin:
     def get_object(self, request, pk):
         obj = self.get_instance(pk)
         return jsonify(self.serializer_class(obj).to_python())
+
+
+class UpdateMixin:
+    def after_update(self, oldInstance, updatedInstance, validated_data):
+        "Will be called after updating existed instance"
+        pass
 
     def put_object(self, request, pk):
         data = self.get_data(request)
@@ -173,14 +162,8 @@ class ModelResource(BaseResource):
 
         return jsonify(self.serializer_class(updatedInstance).to_python())
 
-    def after_update(self, oldInstance, updatedInstance, validated_data):
-        "Will be called after updating existed instance"
-        pass
 
-    def after_create(self, instance, validated_data):
-        "Will be create after creating new instance"
-        pass
-
+class DeleteMixin:
     def delete_object(self, request, pk):
         instance = self.get_instance(pk)
         id = instance.id
@@ -188,10 +171,46 @@ class ModelResource(BaseResource):
 
         return jsonify({"id": id})
 
-    def get_data(self, request):
-        "Returns json body data from request"
-        return request.json
 
-    def after_create(self, instance, validated_data):
-        "Will be create after creating new instance"
-        pass
+class ModelResource(GenericResource,
+                    ListObjectsMixin,
+                    CreateMixin,
+                    RetrieveMixin,
+                    UpdateMixin,
+                    DeleteMixin):
+    """
+    Generic resource for CRUD on mongoengine models.
+
+    Simple usage example::
+
+        >>> class Model(db.Document):
+        >>>
+        >>>     f1 = db.StringField()
+        >>>     f2 = db.BooleanField()
+        >>>     f3 = db.StringField()
+        >>>
+        >>> class S(ModelSerializer):
+        >>>     class Meta:
+        >>>         model = Model
+        >>>
+        >>> class ModelRes(ModelResource):
+        >>>     serializer_class = S
+        >>>     queryset = Model.objects.all()
+        >>>
+        >>> router = DefaultRouter(app)
+        >>> router.register("/test", ModelRes, "modelres")
+
+    In this configuration will be allowed next HTTP methods:
+
+        * GET /test returns::
+
+            [{'f1': '1', 'f2': True, 'f3': '1', 'id': '5864db5d32105b50fa02162b'},
+             {'f1': '2', 'f2': True, 'f3': '2', 'id': '5864db5d32105b50fa02162c'}]
+
+        * GET /test/5864db5d32105b50fa02162b returns::
+
+            {'f1': '1', 'f2': True, 'f3': '1', 'id': '5864e2a332105b5a350b99bc'}
+
+    """
+    __metaclass__ = BaseResourceMetaClass
+
