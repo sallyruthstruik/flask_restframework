@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/sallyruthstruik/flask_restframework.svg?branch=master)](https://travis-ci.org/sallyruthstruik/flask_restframework)
 [![codecov](https://codecov.io/gh/sallyruthstruik/flask_restframework/branch/master/graph/badge.svg)](https://codecov.io/gh/sallyruthstruik/flask_restframework)
+[![PyPI version](https://badge.fury.io/py/flask_restframework.svg)](https://badge.fury.io/py/flask_restframework)
 
 Minimalistic and usage-easy RESTful framework for Flask. Like Django Rest Framework for Flask
 
