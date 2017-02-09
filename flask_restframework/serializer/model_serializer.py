@@ -66,6 +66,10 @@ class ModelSerializer(BaseSerializer):
 
         return instance
 
+    def create(self, validated_data):
+        "Performs create for instance. Returns created instance"
+        return self.get_model().objects.create(**validated_data)
+
 
 
 
