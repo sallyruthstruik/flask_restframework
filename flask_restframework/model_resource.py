@@ -146,22 +146,6 @@ class ModelResource(BaseResource):
         obj = self.get_instance(pk)
         return jsonify(self.serializer_class(obj).to_python())
 
-    def post(self, request):
-        data = self.get_data(request)
-
-        serializer = self.serializer_class(data)
-
-        if not serializer.validate():
-            out = jsonify(serializer.errors)
-            out.status_code = 400
-            return out
-
-        instance = serializer.create(serializer.cleaned_data)
-
-        self.after_create(instance, serializer.cleaned_data)
-
-        return jsonify(self.serializer_class(instance).to_python())
-
     def put_object(self, request, pk):
         data = self.get_data(request)
 

@@ -52,7 +52,6 @@ class ModelSerializer(BaseSerializer):
         "Performs create instance. Returns model intance"
         return self.get_model().objects.create(**validated_data)
 
-
     def update(self, instance, validated_data):
         "Performs update for instance. Returns instance with updated fields"
 
@@ -66,9 +65,7 @@ class ModelSerializer(BaseSerializer):
 
         return instance
 
-    def create(self, validated_data):
-        "Performs create for instance. Returns created instance"
-        return self.get_model().objects.create(**validated_data)
+
 
 
 
