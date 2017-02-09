@@ -57,6 +57,10 @@ class BaseField(object):
         if value is None and self._default is not None:
             value = self._default
 
+            # Allow to pass lambdas as default (as is in mongoengine)
+            if callable(value):
+                value = value()
+
         if value is None:
             if self._required:
                 raise ValidationError("Field is required")
@@ -186,7 +190,53 @@ class MethodField(BaseField):
     def to_python(self, value):
         return value
 
-class PrimaryKeyRelatedField(BaseField):
+
+class BaseRelatedField(BaseField):
+
+    def __init__(self, document_fieldname=None, **k):
+        super(BaseRelatedField, self).__init__(**k)
+        self.document_fieldname = document_fieldname
+
+    def get_value_from_model_object(self, doc, field):
+        field = self.document_fieldname or field
+        parts = field.split("__")
+        out = doc
+        for item in parts:
+            outCls = out.__class__
+
+            if out:
+                out = getattr(out, item)
+
+                try:
+                    outField = getattr(outCls, item)
+                except AttributeError:
+                    outField = None
+
+        if out and outField:
+            from flask_restframework.utils import mongoengine_model_meta
+            return mongoengine_model_meta.FIELD_MAPPING[outField.__class__].from_mongoengine_field(
+                outField).to_python(out)
+
+        return out
+
+
+class ForeignKeyField(BaseRelatedField):
+    """
+    Fields represent ForeignKeyRelation which can be getted with __ notation.
+    It is only READ field, but it subclasses may be also changeable.
+
+    Goal of this field - to allow get inner/related data with __ notation.
+    """
+    def __init__(self, **k):
+        k["read_only"] = True
+        super(ForeignKeyField, self).__init__(**k)
+
+    def to_python(self, value):
+        if isinstance(value, db.Document):
+            return str(value.id)
+        return value
+
+class PrimaryKeyRelatedField(BaseRelatedField):
 
     @classmethod
     def from_mongoengine_field(cls, mongoEngineField):
@@ -214,44 +264,6 @@ class PrimaryKeyRelatedField(BaseField):
         return instance
 
 
-class ForeignKeyField(BaseField):
-    """
-    Fields represent ForeignKeyRelation which can be getted with __ notation.
-    """
-    def __init__(self, document_fieldname=None, **k):
-        k["read_only"] = True
-
-        super(ForeignKeyField, self).__init__(**k)
-        self.document_fieldname = document_fieldname
-
-    def get_value_from_model_object(self, doc, field):
-        field = self.document_fieldname or field
-        parts = field.split("__")
-        out = doc
-        for item in parts:
-            outCls = out.__class__
-
-            if out:
-                out = getattr(out, item)
-
-                try:
-                    outField = getattr(outCls, item)
-                except AttributeError:
-                    outField = None
-
-        if out and outField:
-            from flask_restframework.utils import mongoengine_model_meta
-            return mongoengine_model_meta.FIELD_MAPPING[outField.__class__].from_mongoengine_field(
-                outField).to_python(out)
-
-        return out
-
-    def to_python(self, value):
-        if isinstance(value, db.Document):
-            return str(value.id)
-        return value
-
-
 class ListField(BaseField):
 
     def to_python(self, value):
@@ -265,7 +277,7 @@ class ListField(BaseField):
         return value
 
 
-class EmbeddedField(ForeignKeyField):
+class EmbeddedField(BaseRelatedField):
 
     def __init__(self, read_only=False, **k):
         super(EmbeddedField, self).__init__(**k)

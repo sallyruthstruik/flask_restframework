@@ -3,6 +3,7 @@ import six as six
 from mongoengine.queryset.queryset import QuerySet
 from werkzeug.exceptions import BadRequest
 
+from flask.ext.restframework.fields import BaseRelatedField
 from flask_restframework.fields import ForeignKeyField
 
 from flask_restframework.fields import BaseField
@@ -102,7 +103,7 @@ class BaseSerializer:
         return self._declared_fields
 
     def to_python(self):
-        "Returns python representation of queryset data"
+        "Returns python representation of queryset data. It can be serialized and used in JSON response."
         if isinstance(self._data, QuerySet):
 
             output = []
@@ -213,6 +214,8 @@ class BaseSerializer:
     def get_fk_fields(self):
         """
         Returns dictionary with ForeignKey fields
+        This is fields which ONLY readable. You can use it only for representing nested/related data.
+        For use it in validation, use PrimaryKeyField
         <key in serializer>: <field instance>
         """
         out = {}
@@ -256,7 +259,7 @@ class BaseSerializer:
             out[key] = field.to_python(value)
 
         for key, field in six.iteritems(self.get_fk_fields()):
-            assert isinstance(field, ForeignKeyField)
+            assert isinstance(field, BaseRelatedField)
 
             value = field.get_value_from_model_object(item, key)
 

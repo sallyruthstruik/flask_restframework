@@ -248,7 +248,7 @@ class SimpleFlaskAppTest(unittest.TestCase):
         resp = self.client.put("/test/{}".format(ins.id), data=json.dumps({
             "f3": "OLALA"
         }), headers={"Content-Type": "application/json"})
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 200, resp.data)
         data = self._parse(resp.data)
         self.assertEqual(data["f1"], "1")
         self.assertEqual(data["f2"], True)
