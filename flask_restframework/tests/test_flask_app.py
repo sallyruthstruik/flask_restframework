@@ -361,6 +361,57 @@ class SimpleFlaskAppTest(unittest.TestCase):
             self.assertTrue(type(item["created"]), datetime.datetime)
             self.assertEqual(item["renamed"], item["inner__deep__value"])
 
+    def test_creation(self):
+
+        class Inner(db.EmbeddedDocument):
+            value = db.StringField()
+
+        class Doc(db.Document):
+            inner = db.EmbeddedDocumentField(Inner)
+            inner_list = db.EmbeddedDocumentListField(Inner)
+
+            string = db.StringField()
+            bool = db.BooleanField()
+
+        class S(ModelSerializer):
+            class Meta:
+                model = Doc
+
+        class R(ModelResource):
+            serializer_class = S
+
+            def get_queryset(self):
+                return Doc.objects.all()
+
+        Doc.drop_collection()
+
+        router = DefaultRouter(self.app)
+        router.register("/test", R, "test")
+
+        data = {
+            "inner": {
+                "value": "1"
+            },
+            "inner_list": [{
+                "value": "2"
+            }, {
+                "value": "3"
+            }],
+            "string": "string",
+            "bool": False
+        }
+
+        resp = self.client.post("/test", data=json.dumps(data), content_type="application/json")
+        self.assertEqual(resp.status_code, 200)
+        ins = Doc.objects.first()
+
+        print(resp.data)
+        self.assertEqual(ins.bool, False)
+        self.assertEqual(ins.string, "string")
+        self.assertEqual(ins.inner.value, "1")
+        self.assertEqual(ins.inner_list[0].value, "2")
+        self.assertEqual(ins.inner_list[1].value, "3")
+
 
 
 

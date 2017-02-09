@@ -39,6 +39,7 @@ class ModelSerializer(BaseSerializer):
         for key, fieldCls in six.iteritems(model_meta.get_fields(model)):
             if fieldCls not in self.field_mapping:
                 raise ValueError("No mapping for field {}".format(fieldCls))
+
             fieldsFromModel[key] = self.field_mapping[fieldCls].from_mongoengine_field(
                 model_meta.get_field(model, key)
             )
@@ -46,6 +47,11 @@ class ModelSerializer(BaseSerializer):
         fieldsFromModel.update(super(ModelSerializer, self).get_fields())
 
         return fieldsFromModel
+
+    def create(self, validated_data):
+        "Performs create instance. Returns model intance"
+        return self.get_model().objects.create(**validated_data)
+
 
     def update(self, instance, validated_data):
         "Performs update for instance. Returns instance with updated fields"

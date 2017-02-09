@@ -5,7 +5,27 @@ from flask_restframework.decorators import list_route
 
 
 class DistinctValuesMixin:
+    """
+    Allows to get distinct values for fields in resource.
+    Example usage::
 
+        >>> class SomeResource(DistinctValuesMixin,
+        >>>                    ModelResource):
+        >>>     serializer_class = SomeSerializer
+        >>>     ordering = ["-created"]
+        >>>     distinct_fields = ["name"]
+        >>>
+        >>>     def get_queryset(self):
+        >>>         return SomeModel.objects.all()
+
+    You should specify required resource attribute **distinct_fields** to list of allowed fields.
+    Then you can make requests::
+
+        GET <resource base url>/distinct?field=<fieldname>
+
+    Response will be list of distinct values of field <fieldname> in database.
+    You can filter response with usual backend filters.
+    """
     distinct_fields = None
 
     @list_route(methods=["GET"])

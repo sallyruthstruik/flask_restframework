@@ -15,9 +15,7 @@ def validate(serializerCls):
                 out.status_code = 400
                 return out
 
-            k["cleaned_data"] = s.cleaned_data
-
-            return view_func(*a, **k)
+            return view_func(serializer=s, *a, **k)
         return inner
     return dec
 

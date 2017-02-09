@@ -16,7 +16,13 @@ class BaseField(object):
 
     @classmethod
     def from_mongoengine_field(cls, mongoEngineField):
-        return cls()
+        try:
+            return cls(
+                required=mongoEngineField.required,
+                default=mongoEngineField.default
+            )
+        except:
+            print("ERROR")
 
     def __init__(
             self,
@@ -80,7 +86,10 @@ class BaseField(object):
 
     def get_value_from_model_object(self, doc, field):
         "returns value for fieldName field and document doc"
-        return getattr(doc, field)
+        try:
+            return getattr(doc, field)
+        except:
+            print("ERR")
 
 
 class StringField(BaseField):
@@ -177,13 +186,42 @@ class MethodField(BaseField):
     def to_python(self, value):
         return value
 
+class PrimaryKeyRelatedField(BaseField):
+
+    @classmethod
+    def from_mongoengine_field(cls, mongoEngineField):
+        return cls(
+            related_model=mongoEngineField.document_type,
+            required=mongoEngineField.required,
+            default=mongoEngineField.default
+        )
+
+    def __init__(self, related_model, **k):
+        super(PrimaryKeyRelatedField, self).__init__(**k)
+        self.related_model = related_model
+
+    def to_python(self, value):
+        if isinstance(value, db.Document):
+            return str(value.id)
+        return value
+
+    def validate(self, validator, value):
+        instance = self.related_model.objects.filter(id=value).first()
+
+        if not instance:
+            raise ValidationError("Object with id {} not found".format(value))
+
+        return instance
+
 
 class ForeignKeyField(BaseField):
     """
     Fields represent ForeignKeyRelation which can be getted with __ notation.
     """
-    def __init__(self, document_fieldname=None):
-        super(ForeignKeyField, self).__init__(read_only=True)
+    def __init__(self, document_fieldname=None, **k):
+        k["read_only"] = True
+
+        super(ForeignKeyField, self).__init__(**k)
         self.document_fieldname = document_fieldname
 
     def get_value_from_model_object(self, doc, field):
@@ -220,13 +258,31 @@ class ListField(BaseField):
         embedded = EmbeddedField()
         return list(map(embedded.to_python, value))
 
+    def validate(self, validator, value):
+        if not isinstance(value, list):
+            raise ValidationError("Array is required")
+
+        return value
+
 
 class EmbeddedField(ForeignKeyField):
+
+    def __init__(self, read_only=False, **k):
+        super(EmbeddedField, self).__init__(**k)
+
+        self._read_only = read_only
+
     def to_python(self, value):
         # TODO: Use nested serializer
 
         if value and isinstance(value, db.EmbeddedDocument):
             return json.loads(value.to_json())
+
+        return value
+
+    def validate(self, validator, value):
+        if not isinstance(value, dict):
+            raise ValidationError("Object is required")
 
         return value
 

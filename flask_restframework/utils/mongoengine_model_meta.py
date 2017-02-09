@@ -8,7 +8,7 @@ FIELD_MAPPING = {
     db.BooleanField: fields.BooleanField,
     db.DateTimeField: fields.DateTimeField,
     db.EmbeddedDocumentField: fields.EmbeddedField,
-    db.ReferenceField: fields.ForeignKeyField,
+    db.ReferenceField: fields.PrimaryKeyRelatedField,
     db.IntField: fields.IntegerField,
     db.URLField: fields.URLField,
     db.EmbeddedDocumentListField: fields.ListField,

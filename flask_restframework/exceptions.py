@@ -1,7 +1,14 @@
 __author__ = 'stas'
 
+class BaseException(Exception):
 
-class ValidationError(Exception):
+    status = 500
+    name = "Server Error"
+
+class ValidationError(BaseException):
+
+    status = 400
+    name = "Validation Error"
 
     def __init__(self, data):
         """
@@ -9,3 +16,6 @@ class ValidationError(Exception):
         """
         self.data = data
 
+class NotFound(BaseException):
+    status = 404
+    name = "Not Found"

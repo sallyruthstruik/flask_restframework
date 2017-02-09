@@ -3,7 +3,9 @@ import copy
 import six
 from flask import jsonify
 from flask.globals import current_app
+from mongoengine.errors import DoesNotExist
 
+from flask.ext.restframework.exceptions import NotFound
 from flask_restframework.filter_backends import BaseBackend
 from flask_restframework.resource import BaseResource, BaseResourceMetaClass
 
@@ -82,7 +84,10 @@ class ModelResource(BaseResource):
 
     def get_instance(self, pk):
         "returns one instance from queryset by its PK"
-        return self.get_queryset().get(id=pk)
+        try:
+            return self.get_queryset().get(id=pk)
+        except DoesNotExist:
+            raise NotFound("Object not found")
 
     def get_backend_classes(self):
         "Returns backend classes"
@@ -126,6 +131,22 @@ class ModelResource(BaseResource):
         obj = self.get_instance(pk)
         return jsonify(self.serializer_class(obj).to_python())
 
+    def post(self, request):
+        data = self.get_data(request)
+
+        serializer = self.serializer_class(data)
+
+        if not serializer.validate():
+            out = jsonify(serializer.errors)
+            out.status_code = 400
+            return out
+
+        instance = serializer.create(serializer.cleaned_data)
+
+        self.after_create(instance, serializer.cleaned_data)
+
+        return jsonify(self.serializer_class(instance).to_python())
+
     def put_object(self, request, pk):
         data = self.get_data(request)
 
@@ -155,6 +176,10 @@ class ModelResource(BaseResource):
 
     def after_update(self, oldInstance, updatedInstance, validated_data):
         "Will be called after updating existed instance"
+        pass
+
+    def after_create(self, instance, validated_data):
+        "Will be create after creating new instance"
         pass
 
     def delete_object(self, request, pk):

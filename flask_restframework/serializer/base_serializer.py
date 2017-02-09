@@ -81,6 +81,7 @@ class BaseSerializer:
             fields = ("field1", )               # array of fields need to be serialized. You can't use fields and excluded in
                                                   same serializer
             fk_fields = ("related__field", )    # array of related (or embeddedDocument) fields need to be serialized
+            read_only = (<read only field name>, )  #array of read only fields of serializer
 
 
     """
@@ -272,9 +273,13 @@ class BaseSerializer:
         """
         out = {}
 
+        read_only_from_meta = []
+        if hasattr(self, "Meta"):
+            read_only_from_meta = getattr(self.Meta, "read_only", [])
+
         for key, field in self.get_fields().items():
             assert isinstance(field, BaseField)
-            if not field._read_only:
+            if not field._read_only and key not in read_only_from_meta:
                 out[key] = field
 
         return out
