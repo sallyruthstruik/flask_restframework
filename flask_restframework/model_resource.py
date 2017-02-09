@@ -5,7 +5,7 @@ from flask import jsonify
 from flask.globals import current_app
 from mongoengine.errors import DoesNotExist
 
-from flask.ext.restframework.exceptions import NotFound
+from flask_restframework.exceptions import NotFound
 from flask_restframework.filter_backends import BaseBackend
 from flask_restframework.resource import BaseResource, BaseResourceMetaClass
 

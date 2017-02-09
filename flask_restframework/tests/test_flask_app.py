@@ -7,7 +7,7 @@ import six
 from flask import jsonify
 from flask.app import Flask
 from flask.blueprints import Blueprint
-from flask.ext.mongoengine import MongoEngine
+from flask_mongoengine import MongoEngine
 from flask.globals import request
 from flask.helpers import url_for
 from flask.views import View

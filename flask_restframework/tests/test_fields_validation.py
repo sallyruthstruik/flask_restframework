@@ -1,7 +1,7 @@
 import datetime
 import unittest
 
-from flask.ext.restframework.serializer.model_serializer import ModelSerializer
+from flask_restframework.serializer.model_serializer import ModelSerializer
 from flask_restframework import fields
 from flask_restframework.serializer import BaseSerializer
 from mongoengine import fields as db
