@@ -405,7 +405,6 @@ class SimpleFlaskAppTest(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         ins = Doc.objects.first()
 
-        print(resp.data)
         self.assertEqual(ins.bool, False)
         self.assertEqual(ins.string, "string")
         self.assertEqual(ins.inner.value, "1")
