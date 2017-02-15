@@ -139,7 +139,7 @@ class BaseSerializer:
         :return: updated instance
         """
 
-    def validate(self):
+    def validate(self, part=False):
         """
         Runs validation on passed data
 
@@ -150,6 +150,9 @@ class BaseSerializer:
             >>>     out = jsonify(s.errors)
             >>>     out.status_code = 400
             >>>     return out
+
+        You can preform part validation, i.e. to validate only presented in data fields.
+        It can be useful for validating PATCH request, when we need to validate only subset of fields.
 
         :return: True if validation succeeded, False else
         """
@@ -164,6 +167,11 @@ class BaseSerializer:
             self._cleaned_data = self._data.copy()
 
         for key, field in self._get_writable_fields().items():
+
+            #skip not presented fields for part validation
+            if part and key not in self._data.keys():
+                continue
+
             assert isinstance(field, fields.BaseField)
 
             value = self._data.get(key)

@@ -141,6 +141,12 @@ class IntegerField(BaseField):
     def to_python(self, value):
         return value
 
+    def validate(self, validator, value):
+        try:
+            return int(value)
+        except:
+            raise ValidationError("Integer is required")
+
 # TODO: validate URL
 class URLField(BaseField):
 

@@ -217,6 +217,7 @@ class SimpleFlaskAppTest(unittest.TestCase):
         resp = self.client.get("/test")
         self.assertEqual(resp.status_code, 200)
         data = self._parse(resp.data)
+        print(data)
         self.assertEqual(len(data["results"]), 2)
         item = data["results"][0]
         self.assertEqual(item["dictf"], {"key": "value"})
@@ -382,32 +383,73 @@ class SimpleFlaskAppTest(unittest.TestCase):
             self.assertTrue(type(item["created"]), datetime.datetime)
             self.assertEqual(item["renamed"], item["inner__deep__value"])
 
-    def test_creation(self):
 
-        class Inner(db.EmbeddedDocument):
+class TestModelResources(SimpleFlaskAppTest):
+
+    def setUp(self):
+        super(TestModelResources, self).setUp()
+
+        class EmbeddedDoc(db.EmbeddedDocument):
             value = db.StringField()
 
-        class Doc(db.Document):
-            inner = db.EmbeddedDocumentField(Inner)
-            inner_list = db.EmbeddedDocumentListField(Inner)
+        class BaseDoc(db.Document):
+            inner = db.EmbeddedDocumentField(EmbeddedDoc)
+            inner_list = db.EmbeddedDocumentListField(EmbeddedDoc)
 
+            req_field = db.StringField(required=True)
             string = db.StringField()
             bool = db.BooleanField()
+            integer_field = db.IntField()
 
-        class S(ModelSerializer):
+        class Serializer(ModelSerializer):
             class Meta:
-                model = Doc
+                model = BaseDoc
 
         class R(ModelResource):
-            serializer_class = S
+            serializer_class = Serializer
 
             def get_queryset(self):
-                return Doc.objects.all()
+                return BaseDoc.objects.all()
 
-        Doc.drop_collection()
+        BaseDoc.drop_collection()
 
         router = DefaultRouter(self.app)
-        router.register("/test", R, "test")
+        router.register("/test_resource", R, "test_resource")
+
+        self.BaseDoc = BaseDoc
+
+    def test_patch_several_fields(self):
+
+        id = self.test_creation()
+
+        resp = self.client.patch("/test_resource/{}".format(id), data=json.dumps({
+            "string": "other string",
+            "bool": True
+        }), content_type="application/json")
+
+        self.assertEqual(resp.status_code, 200, resp.data)
+        data = self._parse(resp.data)
+        self.assertEqual(data["string"], "other string")
+        self.assertEqual(data["bool"], True)
+        self.assertEqual(data["inner"], {
+                "value": "1"
+        })
+        self.assertEqual(data["req_field"], "required")
+
+        resp = self.client.patch("/test_resource/{}".format(id), data=json.dumps({
+            "string": "other string",
+            "bool": "Very Bad!",
+            "integer_field": "Not an int!"
+        }), content_type="application/json")
+
+        self.assertEqual(resp.status_code, 400)
+        data = self._parse(resp.data)
+        self.assertEqual(
+            data["bool"], ["Boolean is required"]
+        )
+        self.assertEqual(data["integer_field"], ["Integer is required"])
+
+    def test_creation(self):
 
         data = {
             "inner": {
@@ -419,18 +461,21 @@ class SimpleFlaskAppTest(unittest.TestCase):
                 "value": "3"
             }],
             "string": "string",
-            "bool": False
+            "bool": False,
+            "req_field": "required"
         }
 
-        resp = self.client.post("/test", data=json.dumps(data), content_type="application/json")
+        resp = self.client.post("/test_resource", data=json.dumps(data), content_type="application/json")
         self.assertEqual(resp.status_code, 200)
-        ins = Doc.objects.first()
+        ins = self.BaseDoc.objects.first()
 
         self.assertEqual(ins.bool, False)
         self.assertEqual(ins.string, "string")
         self.assertEqual(ins.inner.value, "1")
         self.assertEqual(ins.inner_list[0].value, "2")
         self.assertEqual(ins.inner_list[1].value, "3")
+
+        return ins.id
 
 
 
