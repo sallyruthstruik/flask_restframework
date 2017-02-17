@@ -187,7 +187,7 @@ class BaseSerializer:
             except ValidationError as e:
                 if isinstance(e.data, dict):
                     for key, message in six.iteritems(e.data):
-                        errors.setdefault(e.data.key, []).append(message)
+                        errors.setdefault(key, []).append(message)
                 elif isinstance(e.data, six.string_types):
                     errors.setdefault(key, []).append(e.data)
 

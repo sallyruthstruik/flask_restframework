@@ -417,6 +417,39 @@ class TestModelResources(SimpleFlaskAppTest):
         router.register("/test_resource", R, "test_resource")
 
         self.BaseDoc = BaseDoc
+        self.EmbeddedDoc = EmbeddedDoc
+        self.Serializer = Serializer
+
+    def test_update_embedded_doc(self):
+
+        doc = self.BaseDoc.objects.create(
+            inner={"value": "1"},
+            req_field="1"
+        )
+
+        serializer = self.Serializer(dict(
+            inner={"value": "2"},
+            req_field="1"
+        ))
+
+        self.assertEqual(serializer.validate(), True)
+
+        #serializer should automatically instantiate embedded doc
+        self.assertTrue(isinstance(serializer.cleaned_data["inner"], self.EmbeddedDoc))
+
+        #serializer should correctly update instance
+        serializer.update(doc, serializer.cleaned_data)
+        self.assertEqual(self.BaseDoc.objects.get(id=doc.id).inner.value, "2")
+
+        #serializer should correctly validate instance
+        serializer = self.Serializer(dict(
+            inner={"value": 123},
+            req_field="1"
+        ))
+        self.assertEqual(serializer.validate(), False)
+        self.assertEqual(serializer.errors, {'value': ['StringField only accepts string values']})
+
+
 
     def test_patch_several_fields(self):
 

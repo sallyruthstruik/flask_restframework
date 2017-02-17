@@ -2,6 +2,7 @@ import datetime
 
 from flask import json
 
+from flask.ext.restframework.utils.util import wrap_mongoengine_errors
 from flask_restframework.validators import BaseValidator
 from flask_restframework.exceptions import ValidationError
 from mongoengine import fields as db
@@ -17,6 +18,14 @@ class BaseField(object):
     serializer = None   #ref on serializer instance
 
     @classmethod
+    def _update_init_args(cls, args, kwargs, mongoEngineField):
+        """
+        Allows to simple override instantiation process from mongoEngineField.
+        See example in EmbeddedField
+        """
+        return args, kwargs
+
+    @classmethod
     def from_mongoengine_field(cls, mongoEngineField):
         validators = None
         if mongoEngineField.validation:
@@ -28,11 +37,15 @@ class BaseField(object):
 
             validators = [validator_adapter]
 
-        return cls(
+        args, kwargs = tuple(), dict(
             required=mongoEngineField.required,
             default=mongoEngineField.default,
             validators=validators
         )
+
+        args, kwargs = cls._update_init_args(args, kwargs, mongoEngineField)
+
+        return cls(*args, **kwargs)
 
     def __init__(
             self,
@@ -284,7 +297,8 @@ class PrimaryKeyRelatedField(BaseRelatedField):
 class ListField(BaseField):
 
     def to_python(self, value):
-        embedded = EmbeddedField()
+        #TODO: get type from ListField and use connected field serializer
+        embedded = EmbeddedField(None)
         return list(map(embedded.to_python, value))
 
     def validate(self, validator, value):
@@ -296,9 +310,14 @@ class ListField(BaseField):
 
 class EmbeddedField(BaseRelatedField):
 
-    def __init__(self, read_only=False, **k):
+    @classmethod
+    def _update_init_args(cls, args, kwargs, mongoEngineField):
+        return (mongoEngineField.document_type, ), kwargs
+
+    def __init__(self, document_class, read_only=False, **k):
         super(EmbeddedField, self).__init__(**k)
 
+        self.document_class = document_class
         self._read_only = read_only
 
     def to_python(self, value):
@@ -313,7 +332,12 @@ class EmbeddedField(BaseRelatedField):
         if not isinstance(value, dict):
             raise ValidationError("Object is required")
 
-        return value
+        obj = self.document_class(**value)
+
+        with wrap_mongoengine_errors():
+            obj.validate()
+
+        return obj
 
 
 class DictField(BaseField):
