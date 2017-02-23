@@ -177,10 +177,7 @@ class BaseSerializer:
             value = self._data.get(key)
 
             try:
-                validated_value = field.run_validate(
-                    validator=self,
-                    value=value
-                )
+                validated_value = field.run_validate(serializer=self, value=value)
 
                 self._cleaned_data[key] = validated_value
 
@@ -298,8 +295,10 @@ class BaseSerializer:
 
     def _bind_self_to_fields(self):
         "For each field sets <field>.serializer to self"
-        for field in six.itervalues(self.get_fields()):
+        for fieldname, field in six.iteritems(self.get_fields()):
             field.serializer = self
+            field.fieldname = fieldname
+
 
 
 

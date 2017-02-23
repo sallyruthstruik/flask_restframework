@@ -3,6 +3,7 @@ import datetime
 from flask import json
 
 from flask.ext.restframework.utils.util import wrap_mongoengine_errors
+from flask.ext.restframework.validators import UniqueValidator
 from flask_restframework.validators import BaseValidator
 from flask_restframework.exceptions import ValidationError
 from mongoengine import fields as db
@@ -16,6 +17,7 @@ class BaseField(object):
     """
 
     serializer = None   #ref on serializer instance
+    fieldname = None    #string name of the field
 
     @classmethod
     def _update_init_args(cls, args, kwargs, mongoEngineField):
@@ -27,7 +29,7 @@ class BaseField(object):
 
     @classmethod
     def from_mongoengine_field(cls, mongoEngineField):
-        validators = None
+        validators = []
         if mongoEngineField.validation:
 
             if hasattr(mongoEngineField.validation, "original_validator"):
@@ -36,6 +38,10 @@ class BaseField(object):
                 validator_adapter = lambda serializer, value: mongoEngineField.validation(value)
 
             validators = [validator_adapter]
+
+        if mongoEngineField.unique:
+            model = mongoEngineField.owner_document
+            validators.append(UniqueValidator(qs=model.objects.all()))
 
         args, kwargs = tuple(), dict(
             required=mongoEngineField.required,
@@ -67,9 +73,9 @@ class BaseField(object):
         self._default = default
         self._read_only = read_only
 
-    def run_validate(self, validator, value):
+    def run_validate(self, serializer, value):
         """
-        :type validator: flask_restframework.serializer.BaseSerializer
+        :type serializer: flask_restframework.serializer.BaseSerializer
 
         Should return value which will be passed in BaseValidator.cleaned_data
         """
@@ -91,10 +97,10 @@ class BaseField(object):
                 return value
 
         for customVal in self._validators:
-            customVal(validator, value)
+            customVal(self, value)
 
         if value:
-            value = self.validate(validator, value)
+            value = self.validate(value)
 
         return value
 
@@ -108,7 +114,7 @@ class BaseField(object):
         raise NotImplementedError()
 
     # TODO: validate MUST be implemented!
-    def validate(self, validator, value):
+    def validate(self, value):
         pass
 
     def get_value_from_model_object(self, doc, field):
@@ -129,7 +135,7 @@ class StringField(BaseField):
         self.choices = choices
         super(StringField, self).__init__(**k)
 
-    def validate(self, validator, value):
+    def validate(self, value):
         if self.choices and value not in self.choices:
             raise ValidationError("Value should be one of {}, got {}".format(
                 self.choices, value)
@@ -143,7 +149,7 @@ class BooleanField(BaseField):
     def to_python(self, value):
         return value
 
-    def validate(self, validator, value):
+    def validate(self, value):
         if value not in [True, False]:
             raise ValidationError("Boolean is required")
 
@@ -154,7 +160,7 @@ class IntegerField(BaseField):
     def to_python(self, value):
         return value
 
-    def validate(self, validator, value):
+    def validate(self, value):
         try:
             return int(value)
         except:
@@ -166,7 +172,7 @@ class URLField(BaseField):
     def to_python(self, value):
         return value
 
-    def validate(self, validator, value):
+    def validate(self, value):
         return value
 
 class DateTimeField(BaseField):
@@ -179,7 +185,7 @@ class DateTimeField(BaseField):
         self._format = format
         super(DateTimeField, self).__init__(**k)
 
-    def validate(self, validator, value):
+    def validate(self, value):
         try:
             return datetime.datetime.strptime(value, self._format)
         except:
@@ -195,7 +201,7 @@ class MongoEngineIdField(BaseField):
         self._documentCls = documentCls
         super(MongoEngineIdField, self).__init__(**k)
 
-    def validate(self, validator, value):
+    def validate(self, value):
         ids = {
             str(item.id): item
             for item in self._documentCls.objects.all()
@@ -285,7 +291,7 @@ class PrimaryKeyRelatedField(BaseRelatedField):
             return str(value.id)
         return value
 
-    def validate(self, validator, value):
+    def validate(self, value):
         instance = self.related_model.objects.filter(id=value).first()
 
         if not instance:
@@ -301,7 +307,7 @@ class ListField(BaseField):
         embedded = EmbeddedField(None)
         return list(map(embedded.to_python, value))
 
-    def validate(self, validator, value):
+    def validate(self, value):
         if not isinstance(value, list):
             raise ValidationError("Array is required")
 
@@ -328,7 +334,7 @@ class EmbeddedField(BaseRelatedField):
 
         return value
 
-    def validate(self, validator, value):
+    def validate(self, value):
         if not isinstance(value, dict):
             raise ValidationError("Object is required")
 

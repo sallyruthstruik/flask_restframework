@@ -28,6 +28,7 @@ class BaseValidator(object):
 
             return True
 
+
         inner.original_validator = self
 
         return inner
@@ -41,9 +42,29 @@ class RegexpValidator(BaseValidator):
         super(RegexpValidator, self).__init__(**k)
         self.pattern = pattern
 
-    def __call__(self, serializer, value):
+    def __call__(self, field, value):
         if not re.match(self.pattern, value):
             self.raise_error(value=value, pattern=self.pattern)
         return value
 
 
+class UniqueValidator(BaseValidator):
+    """
+    Validates uniqueness of the column in the passed queryset
+    """
+
+    message = "Trying to save duplicate value {value}"
+
+    def __init__(self, qs, **k):
+        """
+        :param qs: Queryset or lambda ()->QuerySet
+
+        """
+        super(UniqueValidator, self).__init__(**k)
+        self.qs = qs
+
+    def __call__(self, field, value):
+        if self.qs.first():
+            self.raise_error(value=value)
+
+        return value

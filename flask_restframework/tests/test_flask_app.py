@@ -13,6 +13,7 @@ from flask.helpers import url_for
 from flask.views import View
 from mongoengine import fields as db
 
+from flask.ext.restframework.validators import UniqueValidator
 from flask_restframework.validators import RegexpValidator
 from flask_restframework.decorators import list_route, detail_route
 from flask_restframework import fields
@@ -509,6 +510,49 @@ class TestModelResources(SimpleFlaskAppTest):
         self.assertEqual(ins.inner_list[1].value, "3")
 
         return ins.id
+
+    def test_unique_validation(self):
+
+        class UniqueCol(db.Document):
+
+            value = db.StringField(unique=True)
+            dt_value = db.DateTimeField(unique=True)
+            int_value = db.IntField(unique=True)
+
+        UniqueCol.objects.delete()
+
+        class Serialzier(ModelSerializer):
+
+            class Meta:
+                model = UniqueCol
+
+        class SimpleSerializer(BaseSerializer):
+
+            value = fields.StringField(validators=[
+                UniqueValidator(qs=UniqueCol.objects.all())
+            ])
+
+        UniqueCol.objects.create(
+            value="1",
+            dt_value=datetime.datetime(2000, 1, 1),
+            int_value=1
+        )
+
+        s = SimpleSerializer(data=dict(value="1"))
+        self.assertEqual(s.validate(), False)
+        self.assertEqual(s.errors, {'value': ['Trying to save duplicate value 1']})
+
+        s = Serialzier(data=dict(
+            value="1",
+            dt_value="2000-01-01 00:00:00",
+            int_value=1
+        ))
+
+        self.assertEqual(s.validate(), False)
+        self.assertEqual(s.errors, {
+            'dt_value': ['Trying to save duplicate value 2000-01-01 00:00:00'],
+            'int_value': ['Trying to save duplicate value 1'],
+            'value': ['Trying to save duplicate value 1']})
 
 
 

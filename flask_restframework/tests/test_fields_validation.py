@@ -86,4 +86,3 @@ class TestFieldsValidation(unittest.TestCase):
         self.assertEqual(v.validate(), True)
         self.assertEqual(v.cleaned_data["dt"], datetime.datetime(2016, 1, 1))
 
-
