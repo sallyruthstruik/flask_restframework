@@ -417,6 +417,7 @@ class TestModelResources(SimpleFlaskAppTest):
         router = DefaultRouter(self.app)
         router.register("/test_resource", R, "test_resource")
 
+        self.router = router
         self.BaseDoc = BaseDoc
         self.EmbeddedDoc = EmbeddedDoc
         self.Serializer = Serializer
@@ -532,7 +533,7 @@ class TestModelResources(SimpleFlaskAppTest):
                 UniqueValidator(qs=UniqueCol.objects.all())
             ])
 
-        UniqueCol.objects.create(
+        instance = UniqueCol.objects.create(
             value="1",
             dt_value=datetime.datetime(2000, 1, 1),
             int_value=1
@@ -553,6 +554,28 @@ class TestModelResources(SimpleFlaskAppTest):
             'dt_value': ['Trying to save duplicate value 2000-01-01 00:00:00'],
             'int_value': ['Trying to save duplicate value 1'],
             'value': ['Trying to save duplicate value 1']})
+
+        #test update unique instance
+
+        class R(ModelResource):
+            serializer_class = Serialzier
+
+            def get_queryset(self):
+                return UniqueCol.objects.all()
+
+        self.router.register("/test_unique_validation", R, "test_unique_validation")
+
+        resp = self.client.put("/test_unique_validation/{}".format(instance.id), data=json.dumps({
+            "value": "1",
+            "dt_value": "2000-01-01 00:00:00",
+            "int_value": 2
+        }), content_type="application/json")
+
+        self.assertEqual(resp.status_code, 200, resp.data)
+        self.assertEqual(self._parse(resp.data)["int_value"], 2)
+
+
+
 
 
 

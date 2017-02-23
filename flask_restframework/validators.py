@@ -64,7 +64,16 @@ class UniqueValidator(BaseValidator):
         self.qs = qs
 
     def __call__(self, field, value):
-        if self.qs.first():
+        try:
+            instance = field.serializer.context.get("instance")
+        except AttributeError:
+            instance = None
+
+        qs = self.qs
+        if instance:
+            qs = qs.filter(id__ne=instance.id)
+
+        if qs.first():
             self.raise_error(value=value)
 
         return value

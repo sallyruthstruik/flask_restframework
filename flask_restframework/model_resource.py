@@ -141,15 +141,18 @@ class UpdateMixin:
 
     def _perform_update(self, pk, request, part=False):
         data = self.get_data(request)
-        serializer = self.serializer_class(data)
+        instance = self.get_instance(pk)
+
+        serializer = self.serializer_class(data, context={
+            "instance": instance,
+        })
+
         assert isinstance(serializer, ModelSerializer)
 
         if not serializer.validate(part=part):
             out = jsonify(serializer.errors)
             out.status_code = 400
             return out
-
-        instance = self.get_instance(pk)
 
         oldInstance = copy.deepcopy(instance)
         validated_data = {

@@ -31,22 +31,26 @@ class ModelSerializer(BaseSerializer):
         except:
             raise ValueError("You should specify Meta class with model attribute")
 
+    _fields = None
     def get_fields(self):
-        model = self.get_model()
+        if not self._fields:
+            model = self.get_model()
 
-        fieldsFromModel = {}
+            fieldsFromModel = {}
 
-        for key, fieldCls in six.iteritems(model_meta.get_fields(model)):
-            if fieldCls not in self.field_mapping:
-                raise ValueError("No mapping for field {}".format(fieldCls))
+            for key, fieldCls in six.iteritems(model_meta.get_fields(model)):
+                if fieldCls not in self.field_mapping:
+                    raise ValueError("No mapping for field {}".format(fieldCls))
 
-            fieldsFromModel[key] = self.field_mapping[fieldCls].from_mongoengine_field(
-                model_meta.get_field(model, key)
-            )
+                fieldsFromModel[key] = self.field_mapping[fieldCls].from_mongoengine_field(
+                    model_meta.get_field(model, key)
+                )
 
-        fieldsFromModel.update(super(ModelSerializer, self).get_fields())
+            fieldsFromModel.update(super(ModelSerializer, self).get_fields())
 
-        return fieldsFromModel
+            self._fields = fieldsFromModel
+
+        return self._fields
 
     def create(self, validated_data):
         "Performs create instance. Returns model intance"
