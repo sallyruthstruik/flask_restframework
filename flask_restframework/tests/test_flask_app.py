@@ -512,6 +512,41 @@ class TestModelResources(SimpleFlaskAppTest):
 
         return ins.id
 
+    def test_unique_embedded(self):
+
+        class Emb(db.EmbeddedDocument):
+            ru = db.StringField()
+            en = db.StringField()
+
+        class Col(db.Document):
+
+            value = db.EmbeddedDocumentField(Emb, unique=True)
+
+        Col.objects.delete()
+        Col.objects.create(
+            value={
+                "ru": "ru",
+                "en": "en"
+            }
+        )
+
+        class S(ModelSerializer):
+            class Meta:
+                model = Col
+
+        s = S(data=dict(value=dict(
+            ru="ru",
+            en="en"
+        )))
+        self.assertEqual(s.validate(), False)
+        self.assertTrue("value" in s.errors)
+
+        s = S(data=dict(value=dict(
+            ru="ru1",
+            en="en"
+        )))
+        self.assertEqual(s.validate(), True)
+
     def test_unique_validation(self):
 
         class UniqueCol(db.Document):
