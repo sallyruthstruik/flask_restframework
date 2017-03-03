@@ -3,7 +3,11 @@ import datetime
 import json
 import unittest
 from pprint import pprint
-from unittest.mock import Mock, call
+
+try:
+    from unittest.mock import Mock, call
+except ImportError:
+    from mock import Mock, call
 
 import six
 from flask import jsonify
