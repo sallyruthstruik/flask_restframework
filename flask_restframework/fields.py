@@ -2,8 +2,8 @@ import datetime
 
 from flask import json
 
-from flask.ext.restframework.utils.util import wrap_mongoengine_errors
-from flask.ext.restframework.validators import UniqueValidator
+from flask_restframework.utils.util import wrap_mongoengine_errors
+from flask_restframework.validators import UniqueValidator
 from flask_restframework.validators import BaseValidator
 from flask_restframework.exceptions import ValidationError
 from mongoengine import fields as db

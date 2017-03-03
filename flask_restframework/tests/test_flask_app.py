@@ -15,11 +15,11 @@ from flask.helpers import url_for
 from flask.views import View
 from mongoengine import fields as db
 
-from flask.ext.restframework.authentication_backend import BaseAuthenticationBackend, SimpleBasicAuth
-from flask.ext.restframework.decorators import auth_backends
-from flask.ext.restframework.exceptions import AuthorizationError
-from flask.ext.restframework.middlewares import BaseMiddleware, AuthenticationMiddleware
-from flask.ext.restframework.validators import UniqueValidator
+from flask_restframework.authentication_backend import BaseAuthenticationBackend, SimpleBasicAuth
+from flask_restframework.decorators import auth_backends
+from flask_restframework.exceptions import AuthorizationError
+from flask_restframework.middlewares import BaseMiddleware, AuthenticationMiddleware
+from flask_restframework.validators import UniqueValidator
 from flask_restframework.validators import RegexpValidator
 from flask_restframework.decorators import list_route, detail_route
 from flask_restframework import fields

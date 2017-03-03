@@ -2,7 +2,7 @@ import contextlib
 
 from mongoengine.errors import FieldDoesNotExist, ValidationError
 
-from flask.ext.restframework import exceptions
+from flask_restframework import exceptions
 
 
 @contextlib.contextmanager

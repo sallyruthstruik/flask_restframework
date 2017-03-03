@@ -4,7 +4,7 @@ from flask.globals import request
 from flask.views import View
 from werkzeug.exceptions import MethodNotAllowed
 
-from flask.ext.restframework.decorators import auth_backends
+from flask_restframework.decorators import auth_backends
 
 ALL_METHODS = [
     "GET",
