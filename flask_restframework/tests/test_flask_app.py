@@ -1,7 +1,9 @@
+import base64
 import datetime
 import json
 import unittest
 from pprint import pprint
+from unittest.mock import Mock, call
 
 import six
 from flask import jsonify
@@ -13,6 +15,10 @@ from flask.helpers import url_for
 from flask.views import View
 from mongoengine import fields as db
 
+from flask.ext.restframework.authentication_backend import BaseAuthenticationBackend, SimpleBasicAuth
+from flask.ext.restframework.decorators import auth_backends
+from flask.ext.restframework.exceptions import AuthorizationError
+from flask.ext.restframework.middlewares import BaseMiddleware, AuthenticationMiddleware
 from flask.ext.restframework.validators import UniqueValidator
 from flask_restframework.validators import RegexpValidator
 from flask_restframework.decorators import list_route, detail_route
@@ -383,6 +389,137 @@ class SimpleFlaskAppTest(unittest.TestCase):
             self.assertEqual(item["value"], item["method_field"])
             self.assertTrue(type(item["created"]), datetime.datetime)
             self.assertEqual(item["renamed"], item["inner__deep__value"])
+
+class TestMiddlewares(SimpleFlaskAppTest):
+
+    def setUp(self):
+        super(TestMiddlewares, self).setUp()
+        @self.app.route("/test_middleware", methods=["GET"])
+        def test_middleware():
+            return "test-middleware"
+
+
+    def test_authorization(self):
+
+        class CustomAuthBackends(BaseAuthenticationBackend):
+            def get_user(self, request):
+                if request.args:
+                    return True
+                return False
+
+        @self.app.route("/test_auth_route", methods=["GET"])
+        @auth_backends(CustomAuthBackends)
+        def test_auth():
+            return "ok"
+
+        self.app.config["BASIC_AUTH_LOGIN"] = "admin"
+        self.app.config["BASIC_AUTH_PASSWORD"] = "1"
+
+        @self.app.route("/test_basic", methods=["GET"])
+        @auth_backends(SimpleBasicAuth)
+        def test_basic():
+            return "basic"
+
+
+        class TestRes(BaseResource):
+            authentication_backends = [CustomAuthBackends]
+            def get(self, request):
+                return "auth res"
+
+        router = DefaultRouter(self.app)
+        router.register("/test_auth_resource", TestRes, "test_auth_res")
+
+        AuthenticationMiddleware.register(self.app)
+
+        resp = self.client.get("/test_auth_route")
+        self.assertEqual(resp.status_code, 401)
+        self.assertEqual(resp.data, b'Authentication fails')
+
+        resp = self.client.get("/test_auth_route?key=value")
+        self.assertEqual(resp.status_code, 200)
+
+        resp = self.client.get("/test_auth_resource")
+        self.assertEqual(resp.status_code, 401)
+
+        resp = self.client.get("/test_auth_resource?key=value")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data, b"auth res")
+
+        resp = self.client.get("/test_basic?k=v")
+        self.assertEqual(resp.status_code, 401)
+
+        resp = self.client.get(
+            "/test_basic?k=v", headers={
+                'Authorization': b'Basic '+base64.b64encode(b"admin:1")
+            }
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data, b"basic")
+
+    def test_middleware_can_interrupt_execution(self):
+        m = Mock()
+
+        class Middleware1(BaseMiddleware):
+
+            def before_request(self):
+                m("before-1")
+                return "INTERRUPTED", 400
+
+            def after_request(self, response):
+                m("after-1")
+                return response
+
+        class Middleware2(BaseMiddleware):
+            def before_request(self):
+                m("before-2")
+
+            def after_request(self, response):
+                m("after-2")
+                return response
+
+        Middleware1.register(self.app)
+        Middleware2.register(self.app)
+
+        resp = self.client.get("/test_middleware")
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.data, b"INTERRUPTED")
+        self.assertEqual(m.call_args_list, [
+            call("before-1"),
+            call("after-2"),
+            call("after-1")
+        ])
+
+
+    def test_middlewares_order(self):
+        m = Mock()
+
+        class Middleware1(BaseMiddleware):
+
+            def before_request(self):
+                m("before-1")
+
+            def after_request(self, response):
+                m("after-1")
+                return response
+
+        class Middleware2(BaseMiddleware):
+            def before_request(self):
+                m("before-2")
+
+            def after_request(self, response):
+                m("after-2")
+                return response
+
+        Middleware1.register(self.app)
+        Middleware2.register(self.app)
+
+        self.client.get("/test_middleware")
+        self.assertEqual(m.call_args_list, [
+            call("before-1"),
+            call("before-2"),
+            call("after-2"),
+            call("after-1")
+        ])
 
 
 class TestModelResources(SimpleFlaskAppTest):

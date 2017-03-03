@@ -4,6 +4,8 @@ from flask.globals import request
 from flask.views import View
 from werkzeug.exceptions import MethodNotAllowed
 
+from flask.ext.restframework.decorators import auth_backends
+
 ALL_METHODS = [
     "GET",
     "POST",
@@ -52,6 +54,8 @@ class BaseResource(object):
 
     request = None
 
+    authentication_backends = None   #list of authentication backends
+
     def __init__(self, request, ):
         self.request = request
 
@@ -97,6 +101,9 @@ class BaseResource(object):
             return cls(request).dispatch_request(suffix=suffix, **params)
 
         view_func.__name__ = funcName
+
+        if cls.authentication_backends:
+            view_func = auth_backends(*cls.authentication_backends)(view_func)
 
         return view_func
 

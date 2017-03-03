@@ -55,3 +55,15 @@ def detail_route(methods=None):
     return dec
 
 
+def auth_backends(*backends):
+
+    def dec(func):
+
+        @wraps(func)
+        def inner(*a, **k):
+            return func(*a, **k)
+
+        inner.authentication_backends = backends
+        return inner
+
+    return dec

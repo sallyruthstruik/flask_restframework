@@ -16,6 +16,11 @@ class ValidationError(BaseException):
         """
         self.data = data
 
+class AuthorizationError(BaseException):
+    status = 401
+    name = "Not authorized"
+
+
 class NotFound(BaseException):
     status = 404
     name = "Not Found"
