@@ -356,3 +356,10 @@ class DictField(BaseField):
                 return value
 
         return value
+
+    def validate(self, value):
+
+        if not isinstance(value, dict):
+            raise ValidationError("Dict is required!")
+
+        return value

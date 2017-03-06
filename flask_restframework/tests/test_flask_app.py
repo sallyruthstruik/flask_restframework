@@ -542,6 +542,7 @@ class TestModelResources(SimpleFlaskAppTest):
             string = db.StringField()
             bool = db.BooleanField()
             integer_field = db.IntField()
+            dict_f = db.DictField()
 
         class Serializer(ModelSerializer):
             class Meta:
@@ -638,7 +639,10 @@ class TestModelResources(SimpleFlaskAppTest):
             }],
             "string": "string",
             "bool": False,
-            "req_field": "required"
+            "req_field": "required",
+            "dict_f": {
+                "key": "value"
+            }
         }
 
         resp = self.client.post("/test_resource", data=json.dumps(data), content_type="application/json")
@@ -650,6 +654,7 @@ class TestModelResources(SimpleFlaskAppTest):
         self.assertEqual(ins.inner.value, "1")
         self.assertEqual(ins.inner_list[0].value, "2")
         self.assertEqual(ins.inner_list[1].value, "3")
+        self.assertEqual(ins.dict_f, {"key": "value"})
 
         return ins.id
 
