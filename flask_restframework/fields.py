@@ -1,5 +1,6 @@
 import datetime
 
+from bson.dbref import DBRef
 from flask import json
 
 
@@ -296,7 +297,7 @@ class PrimaryKeyRelatedField(BaseRelatedField):
         self.related_model = related_model
 
     def to_python(self, value):
-        if isinstance(value, db.Document):
+        if isinstance(value, (db.Document, DBRef)):
             return str(value.id)
         return value
 

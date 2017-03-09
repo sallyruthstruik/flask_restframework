@@ -122,13 +122,13 @@ class CreateMixin:
 
         self.after_create(instance, serializer.cleaned_data)
 
-        return jsonify(self.serializer_class(instance).to_python())
+        return jsonify(self.serializer_class(instance).serialize())
 
 
 class RetrieveMixin:
     def get_object(self, request, pk):
         obj = self.get_instance(pk)
-        return jsonify(self.serializer_class(obj).to_python())
+        return jsonify(self.serializer_class(obj).serialize())
 
 
 class UpdateMixin:
@@ -163,7 +163,7 @@ class UpdateMixin:
 
         updatedInstance = serializer.update(instance, validated_data=validated_data)
         self.after_update(oldInstance, updatedInstance, validated_data)
-        return jsonify(self.serializer_class(updatedInstance).to_python())
+        return jsonify(self.serializer_class(updatedInstance).serialize())
 
     def patch_object(self, request, pk):
         return self._perform_update(pk, request, part=True)

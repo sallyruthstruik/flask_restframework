@@ -124,11 +124,16 @@ class BaseSerializer:
         """
 
         data = self.to_python()
-        out = []
-        for item in data:
-            out.append(self._serialize_item(item))
 
-        return out
+
+        if isinstance(data, list):
+            out = []
+            for item in data:
+                out.append(self._serialize_item(item))
+            return out
+        else:
+            return self._serialize_item(data)
+
 
 
     @property
