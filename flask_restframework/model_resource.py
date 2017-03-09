@@ -94,11 +94,11 @@ class ListObjectsMixin:
             pagination = paginationCls(qs)
             pagination.paginate(request)
 
-            data = self.serializer_class(pagination.qs).to_python()
+            data = self.serializer_class(pagination.qs).serialize()
 
             data = pagination.update_response(data)
         else:
-            data = self.serializer_class(qs).to_python()
+            data = self.serializer_class(qs).serialize()
 
         return jsonify(data)
 

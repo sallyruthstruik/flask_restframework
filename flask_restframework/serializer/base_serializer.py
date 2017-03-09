@@ -103,7 +103,10 @@ class BaseSerializer:
         return self._declared_fields
 
     def to_python(self):
-        "Returns python representation of queryset data. It can be serialized and used in JSON response."
+        """
+        Returns python representation of queryset data.
+        This data will be used in serializer.cleaned_data
+        """
         if isinstance(self._data, QuerySet):
 
             output = []
@@ -112,13 +115,21 @@ class BaseSerializer:
         else:
             output = self._item_to_python(self._data)
 
-        output = self.serialize(output)
-
         return output
 
-    def serialize(self, serializedData):
-        "This method allows to add custom serialization"
-        return serializedData
+    def serialize(self):
+        """
+        This method takes python representation .to_python of data
+        and perform serialization to json-compatible array
+        """
+
+        data = self.to_python()
+        out = []
+        for item in data:
+            out.append(self._serialize_item(item))
+
+        return out
+
 
     @property
     def cleaned_data(self):
@@ -272,6 +283,23 @@ class BaseSerializer:
 
         return out
 
+    def _serialize_item(self, item):
+        """
+        Performs serialization for python representation of item.
+        Uses Field.
+        """
+        out = {}
+
+        for key, value in self.get_fields().items():
+            assert isinstance(value, BaseField)
+            if key in item:
+                out[key] = value.to_json(item[key])
+
+        for key, value in self.get_fk_fields().items():
+            if key in item:
+                out[key] = value.to_json(item[key])
+
+        return out
 
     def _get_writable_fields(self):
         """

@@ -564,6 +564,40 @@ class TestModelResources(SimpleFlaskAppTest):
         self.EmbeddedDoc = EmbeddedDoc
         self.Serializer = Serializer
 
+    def test_reference_field_serialization(self):
+
+        class Ref(db.Document):
+            value = db.StringField()
+
+        class Doc(db.Document):
+            ref = db.ReferenceField(Ref)
+            ref_list = db.ListField(db.ReferenceField(Ref))
+
+        Ref.objects.delete()
+        Doc.objects.delete()
+
+        r1 = Ref.objects.create(**dict(
+            value="1"
+        ))
+        r2 = Ref.objects.create(**dict(
+            value="2"
+        ))
+
+        d = Doc.objects.create(**dict(
+            ref=r1,
+            ref_list=[r1, r2]
+        ))
+
+        class S(ModelSerializer):
+            class Meta:
+                model = Doc
+
+        data = S(Doc.objects.all()).serialize()[0]
+
+        self.assertEqual(data["ref"], str(r1.id))
+        self.assertEqual(data["ref_list"], list(map(str, [r1.id, r2.id])))
+
+
     def test_update_embedded_doc(self):
 
         doc = self.BaseDoc.objects.create(

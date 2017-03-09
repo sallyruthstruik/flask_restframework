@@ -2,6 +2,7 @@ import datetime
 
 from flask import json
 
+
 from flask_restframework.utils.util import wrap_mongoengine_errors
 from flask_restframework.validators import UniqueValidator
 from flask_restframework.validators import BaseValidator
@@ -113,16 +114,22 @@ class BaseField(object):
         """
         raise NotImplementedError()
 
+    def to_json(self, value):
+        """
+        Takes Python representation of value and should return JSON-compatible object
+
+        Usually returns .to_python
+        """
+        return self.to_python(value)
+
     # TODO: validate MUST be implemented!
     def validate(self, value):
         pass
 
     def get_value_from_model_object(self, doc, field):
         "returns value for fieldName field and document doc"
-        try:
-            return getattr(doc, field)
-        except:
-            print("ERR")
+        return getattr(doc, field)
+
 
 
 class StringField(BaseField):
@@ -291,6 +298,9 @@ class PrimaryKeyRelatedField(BaseRelatedField):
             return str(value.id)
         return value
 
+    def to_json(self, value):
+        return value
+
     def validate(self, value):
         instance = self.related_model.objects.filter(id=value).first()
 
@@ -302,10 +312,25 @@ class PrimaryKeyRelatedField(BaseRelatedField):
 
 class ListField(BaseField):
 
+    nestedField = None  #type: BaseField
+
+    @classmethod
+    def from_mongoengine_field(cls, mongoEngineField):
+        from flask_restframework.utils.mongoengine_model_meta import FIELD_MAPPING
+        instance = super(ListField, cls).from_mongoengine_field(mongoEngineField)
+
+        innerField = mongoEngineField.field
+        nestedField = FIELD_MAPPING[innerField.__class__].from_mongoengine_field(innerField)
+
+        instance.nestedField = nestedField
+
+        return instance
+
     def to_python(self, value):
-        #TODO: get type from ListField and use connected field serializer
-        embedded = EmbeddedField(None)
-        return list(map(embedded.to_python, value))
+        return list(map(self.nestedField.to_python, value))
+
+    def to_json(self, value):
+        return list(map(self.nestedField.to_json, value))
 
     def validate(self, value):
         if not isinstance(value, list):
