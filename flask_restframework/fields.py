@@ -185,8 +185,10 @@ class URLField(BaseField):
 class DateTimeField(BaseField):
 
     def to_python(self, value):
-        if value:
+        if isinstance(value, (datetime.date, datetime.datetime)):
             return value.strftime(self._format)
+
+        return value
 
     def __init__(self, format="%Y-%m-%d %H:%M:%S", **k):
         self._format = format
