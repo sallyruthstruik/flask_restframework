@@ -564,6 +564,16 @@ class TestModelResources(SimpleFlaskAppTest):
         self.EmbeddedDoc = EmbeddedDoc
         self.Serializer = Serializer
 
+    def test_cant_update_doc_id(self):
+        instance = self.BaseDoc.objects.create(req_field="1")
+
+        data = {"req_field": "1", "id": "Olala"}
+        serializer = self.Serializer(data,
+                                     context={"instance": instance})
+
+        serializer.update(instance, data)
+
+
     def test_reference_field_serialization(self):
 
         class Ref(db.Document):

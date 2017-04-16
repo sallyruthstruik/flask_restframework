@@ -59,6 +59,9 @@ class ModelSerializer(BaseSerializer):
     def update(self, instance, validated_data):
         "Performs update for instance. Returns instance with updated fields"
 
+        #don't update id of document
+        validated_data.pop("id", None)
+
         for key, value in six.iteritems(validated_data):
             try:
                 setattr(instance, key, value)

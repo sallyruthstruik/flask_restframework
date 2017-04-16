@@ -3,12 +3,17 @@ from collections import namedtuple
 PageInfo = namedtuple("PageInfo", ["page", "page_size"])
 
 class DefaultPagination:
-    def __init__(self, qs):
+    def __init__(self, qs, total=None):
         self.qs = qs
         self.total = 0  #total objects count
         self.count_pages = 0    #total count of pages
         self.page = 0       #current page
         self.page_size = 10 #current page size
+
+        if total is None:
+            self.total = self.qs.count()
+        else:
+            self.total = total
 
     def paginate(self, request):
         "Perform qs filtration"
@@ -18,7 +23,6 @@ class DefaultPagination:
         page = pageInfo.page
         page_size = pageInfo.page_size
 
-        self.total = self.qs.count()
         self.count_pages = int(self.total/page_size)+1
         self.page = page
         self.page_size = page_size
