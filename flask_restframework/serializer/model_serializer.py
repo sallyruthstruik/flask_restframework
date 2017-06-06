@@ -33,6 +33,12 @@ class ModelSerializer(BaseSerializer):
 
     _fields = None
     def get_fields(self):
+        """
+        Returns all field for this serializer.
+        It can be overrided.
+
+        :rtype:
+        """
         if not self._fields:
             model = self.get_model()
 

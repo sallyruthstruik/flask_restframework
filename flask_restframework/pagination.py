@@ -23,7 +23,12 @@ class DefaultPagination:
         page = pageInfo.page
         page_size = pageInfo.page_size
 
-        self.count_pages = int(self.total/page_size)+1
+        full_pages = int(self.total / page_size)
+        if self.total % page_size == 0:
+            self.count_pages = full_pages
+        else:
+            self.count_pages = full_pages + 1
+
         self.page = page
         self.page_size = page_size
 

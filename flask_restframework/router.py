@@ -1,3 +1,4 @@
+from flask import logging
 from flask.globals import request
 
 from flask_restframework.resource import BaseResource
@@ -14,6 +15,7 @@ class BaseRouter(object):
     def init_app(self, app):
         self.app = app
 
+LOGGER = logging.getLogger("restframework.router")
 
 class DefaultRouter(BaseRouter):
     """
@@ -67,40 +69,51 @@ class DefaultRouter(BaseRouter):
                 yield item
 
     def register(self, url, viewCls, basename):
-        if issubclass(viewCls, BaseResource):
+        assert issubclass(viewCls, BaseResource), "You shold pass BaseResource subclass!"
 
-            listMethods = []
-            detailMethods = []
+        listMethods = []
+        detailMethods = []
 
-            for key, value in self._iter_methods(viewCls, []):
-                if callable(value):
-                    if key.upper() in self.METHODS:
-                        # simple list route
-                        listMethods.append(key)
-                    elif key.replace("_object", "").upper() in self.METHODS:
-                        detailMethods.append(key.replace("_object", ""))
+        for key, value in self._iter_methods(viewCls, []):
+            if callable(value):
+                if key.upper() in self.METHODS:
+                    # simple list route
+                    listMethods.append(key)
+                elif key.replace("_object", "").upper() in self.METHODS:
+                    detailMethods.append(key.replace("_object", ""))
 
-                    else:
-                        if hasattr(value, "_is_view_function"):
-                            self.app.add_url_rule(
-                                url+value._route_part,
-                                basename+"-{}".format(value._name_part),
-                                self._get_route_handler(value, viewCls),
-                                methods=value._methods
-                            )
+                else:
+                    if hasattr(value, "_is_view_function"):
+                        self._add_url_rule(
+                            url+value._route_part,
+                            basename+"-{}".format(value._name_part),
+                            self._get_route_handler(value, viewCls),
+                            methods=value._methods
+                        )
 
 
-            if listMethods:
-                self.app.add_url_rule(
-                    url, basename, viewCls.as_view(basename),
-                    methods=listMethods
-                )
+        if listMethods:
+            self._add_url_rule(
+                url, basename, viewCls.as_view(basename),
+                methods=listMethods
+            )
 
-            if detailMethods:
-                detailBasename = basename + "-detail"
-                self.app.add_url_rule(
-                    url + "/<pk>", detailBasename, viewCls.as_view(
-                        detailBasename, suffix="_object"
-                    ), methods=detailMethods
-                )
+        if detailMethods:
+            detailBasename = basename + "-detail"
+            self._add_url_rule(
+                url + "/<pk>", detailBasename, viewCls.as_view(
+                    detailBasename, suffix="_object"
+                ), methods=detailMethods
+            )
 
+
+    def _add_url_rule(self, url, basename, route_handler, methods):
+        LOGGER.info("Create new URL rule: url=%s, basename=%s, handler=%s, methods=%s",
+                    url, basename, route_handler, methods)
+
+        self.app.add_url_rule(
+            url,
+            basename,
+            route_handler,
+            methods=methods
+        )

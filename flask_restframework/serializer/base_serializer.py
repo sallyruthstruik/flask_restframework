@@ -107,7 +107,7 @@ class BaseSerializer:
         Returns python representation of queryset data.
         This data will be used in serializer.cleaned_data
         """
-        if isinstance(self._data, QuerySet):
+        if isinstance(self._data, (QuerySet, list)):
 
             output = []
             for item in self._data:
@@ -124,7 +124,6 @@ class BaseSerializer:
         """
 
         data = self.to_python()
-
 
         if isinstance(data, list):
             out = []
@@ -226,6 +225,15 @@ class BaseSerializer:
             elif hasattr(meta, "excluded"):
                 output = set(self.get_fields().keys()).difference(meta.excluded)
 
+        # check all fields are presented
+        fields = self.get_fields()
+        bad_fields = [
+            f for f in output
+            if f not in fields
+        ]
+        if bad_fields:
+            raise TypeError("Fields in Meta.fields are not declared in serializer: {}".format(", ".join(bad_fields)))
+
         return output
 
     def get_declared_only_fields(self):
@@ -284,7 +292,7 @@ class BaseSerializer:
 
             value = field.get_value_from_model_object(item, key)
 
-            out[key] = field.to_python(value)
+            out[key] = value
 
         return out
 

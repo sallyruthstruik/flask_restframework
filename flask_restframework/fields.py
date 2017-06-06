@@ -3,7 +3,6 @@ import datetime
 from bson.dbref import DBRef
 from flask import json
 
-
 from flask_restframework.utils.util import wrap_mongoengine_errors
 from flask_restframework.validators import UniqueValidator
 from flask_restframework.validators import BaseValidator
@@ -101,7 +100,7 @@ class BaseField(object):
         for customVal in self._validators:
             customVal(self, value)
 
-        if value:
+        if value is not None:
             value = self.validate(value)
 
         return value
@@ -121,7 +120,7 @@ class BaseField(object):
 
         Usually returns .to_python
         """
-        return self.to_python(value)
+        return value
 
     # TODO: validate MUST be implemented!
     def validate(self, value):
@@ -242,28 +241,17 @@ class BaseRelatedField(BaseField):
         super(BaseRelatedField, self).__init__(**k)
         self.document_fieldname = document_fieldname
 
+
     def get_value_from_model_object(self, doc, field):
-        field = self.document_fieldname or field
-        parts = field.split("__")
         out = doc
-        for item in parts:
-            outCls = out.__class__
 
-            if out:
-                out = getattr(out, item)
-
-                try:
-                    outField = getattr(outCls, item)
-                except AttributeError:
-                    outField = None
-
-        if out and outField:
-            from flask_restframework.utils import mongoengine_model_meta
-            return mongoengine_model_meta.FIELD_MAPPING[outField.__class__].from_mongoengine_field(
-                outField).to_python(out)
+        try:
+            for part in (self.document_fieldname or field).split("__"):
+                out = getattr(out, part)
+        except AttributeError:
+            return None
 
         return out
-
 
 class ForeignKeyField(BaseRelatedField):
     """
@@ -318,60 +306,61 @@ class ListField(BaseField):
     nestedField = None  #type: BaseField
 
     @classmethod
-    def from_mongoengine_field(cls, mongoEngineField):
+    def _update_init_args(cls, args, kwargs, mongoEngineField):
         from flask_restframework.utils.mongoengine_model_meta import FIELD_MAPPING
-        instance = super(ListField, cls).from_mongoengine_field(mongoEngineField)
 
-        innerField = mongoEngineField.field
-        nestedField = FIELD_MAPPING[innerField.__class__].from_mongoengine_field(innerField)
+        # Create serializer field for inner mongoengine field
+        innerField = FIELD_MAPPING[mongoEngineField.field.__class__].from_mongoengine_field(
+            mongoEngineField.field
+        )
 
-        instance.nestedField = nestedField
+        return (innerField,), kwargs
 
-        return instance
+    def __init__(self, innerField, **k):
+        super(ListField, self).__init__(**k)
+        self.inner_serializer = innerField  # type: BaseField
 
     def to_python(self, value):
-        return list(map(self.nestedField.to_python, value))
-
-    def to_json(self, value):
-        return list(map(self.nestedField.to_json, value))
+        if value:
+            return list(map(self.inner_serializer.to_python, value))
 
     def validate(self, value):
         if not isinstance(value, list):
             raise ValidationError("Array is required")
 
-        return value
+        return list(map(self.inner_serializer.validate, value))
 
 
 class EmbeddedField(BaseRelatedField):
 
     @classmethod
     def _update_init_args(cls, args, kwargs, mongoEngineField):
-        return (mongoEngineField.document_type, ), kwargs
+        from flask_restframework.serializer.model_serializer import ModelSerializer
 
-    def __init__(self, document_class, read_only=False, **k):
+        class InnerSerializer(ModelSerializer):
+            class Meta:
+                model = mongoEngineField.document_type
+
+        return (InnerSerializer, ), kwargs
+
+    def __init__(self, inner_serializer=None, read_only=False, **k):
         super(EmbeddedField, self).__init__(**k)
 
-        self.document_class = document_class
+        self.inner_serializer = inner_serializer    #type: ModelSerializer
         self._read_only = read_only
 
     def to_python(self, value):
-        # TODO: Use nested serializer
-
-        if value and isinstance(value, db.EmbeddedDocument):
-            return json.loads(value.to_json())
-
-        return value
+        if value:
+            return self.inner_serializer(value).to_python()
 
     def validate(self, value):
         if not isinstance(value, dict):
             raise ValidationError("Object is required")
 
-        obj = self.document_class(**value)
+        if not self.inner_serializer(value).validate():
+            raise ValidationError("Incorrect value passed to inner field: {}".format(value))
 
-        with wrap_mongoengine_errors():
-            obj.validate()
-
-        return obj
+        return self.inner_serializer.Meta.model(**value)
 
 
 class DictField(BaseField):

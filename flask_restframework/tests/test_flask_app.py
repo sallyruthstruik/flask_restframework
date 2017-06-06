@@ -4,6 +4,9 @@ import json
 import unittest
 from pprint import pprint
 
+import pytest
+from pymongo.database import Database
+
 try:
     from unittest.mock import Mock, call
 except ImportError:
@@ -45,6 +48,10 @@ class SimpleFlaskAppTest(unittest.TestCase):
         self.client = self.app.test_client()
 
         self.db = MongoEngine(self.app)
+
+        with self.app.app_context():
+            self.db.connection.drop_database("test")
+        # self.db.connection
 
         class TestCol(db.Document):
             value = db.StringField()
@@ -167,6 +174,7 @@ class SimpleFlaskAppTest(unittest.TestCase):
         with self.app.test_request_context():
             self.assertEqual(url_for("test.blabla"), "/test/blabla")
 
+    @pytest.mark.testModelResource123
     def testModelResource(self):
 
         router = DefaultRouter(self.app)
@@ -532,7 +540,7 @@ class TestModelResources(SimpleFlaskAppTest):
         super(TestModelResources, self).setUp()
 
         class EmbeddedDoc(db.EmbeddedDocument):
-            value = db.StringField()
+            value = db.StringField(required=True)
 
         class BaseDoc(db.Document):
             inner = db.EmbeddedDocumentField(EmbeddedDoc)
@@ -631,11 +639,11 @@ class TestModelResources(SimpleFlaskAppTest):
 
         #serializer should correctly validate instance
         serializer = self.Serializer(dict(
-            inner={"value": 123},
+            inner={},
             req_field="1"
         ))
         self.assertEqual(serializer.validate(), False)
-        self.assertEqual(serializer.errors, {'value': ['StringField only accepts string values']})
+        self.assertEqual(serializer.errors, {'inner': ['Incorrect value passed to inner field: {}']})
 
 
 
@@ -801,10 +809,20 @@ class TestModelResources(SimpleFlaskAppTest):
 
 
 
+class TestModelSerializer(SimpleFlaskAppTest):
 
+    def test_not_existed_field(self):
 
+        def create():
+            class Serializer(ModelSerializer):
+                class Meta:
+                    model = self.TestCol
+                    fields = (
+                        "olala",
+                    )
 
+            Serializer(self.TestCol.objects.all()).to_python()
 
-
+        self.assertRaises(TypeError, create)
 
 
