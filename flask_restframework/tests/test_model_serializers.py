@@ -33,13 +33,13 @@ def db(app):
         MONGODB_DB="test"
     ))
 
-    database = db.connection.get_database("test")
-    assert isinstance(database, Database)
+    with app.app_context():
+        database = db.connection.get_database("test")
 
-    for col in database.collection_names():
-        if col != "system.indexes":
-            print(col)
-            database.drop_collection(col)
+        for col in database.collection_names():
+            if col != "system.indexes":
+                print(col)
+                database.drop_collection(col)
 
     return db
 
