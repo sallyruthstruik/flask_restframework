@@ -78,7 +78,7 @@ def test_embedded_inner_serialization(main_record):
             InnerSerializer
         )
         embedded_list_inner = fields.ListField(
-            InnerSerializer
+            fields.EmbeddedField(InnerSerializer)
         )
 
         class Meta:
