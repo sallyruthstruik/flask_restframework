@@ -257,6 +257,16 @@ class BaseRelatedField(BaseField):
 
 
     def get_value_from_model_object(self, doc, field):
+        """
+        Gets value from doc according to field name. FIeld name can contain __ notation.
+        If defined self.document_fieldname, it will be used instead of field.
+        Because we can use aliases like::
+
+            alias = field.ForeignKeyField("some__real__path")
+
+        :param doc: Document
+        :param field: string fieldname
+        """
         out = doc
 
         try:
@@ -282,6 +292,11 @@ class ForeignKeyField(BaseRelatedField):
     def to_python(self, value):
         if isinstance(value, db.Document):
             return str(value.id)
+        return value
+
+    def to_json(self, value):
+        if isinstance(value, db.EmbeddedDocument):
+            return dict(value.to_mongo())
         return value
 
 class PrimaryKeyRelatedField(BaseRelatedField):

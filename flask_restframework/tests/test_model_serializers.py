@@ -1,25 +1,25 @@
 import pytest
 from flask.app import Flask
 from flask_mongoengine import MongoEngine
-from mongoengine import fields as db
+from mongoengine import fields as mfields
 from pymongo.database import Database
 
 from flask_restframework import fields
 from flask_restframework.serializer.model_serializer import ModelSerializer
 
-class Related(db.Document):
-    value = db.StringField()
+class Related(mfields.Document):
+    value = mfields.StringField()
 
-class Embedded(db.EmbeddedDocument):
-    value1 = db.StringField()
-    value2 = db.StringField()
+class Embedded(mfields.EmbeddedDocument):
+    value1 = mfields.StringField()
+    value2 = mfields.StringField()
 
-class Main(db.Document):
-    embedded_inner = db.EmbeddedDocumentField(Embedded)
-    embedded_list_inner = db.EmbeddedDocumentListField(Embedded)
+class Main(mfields.Document):
+    embedded_inner = mfields.EmbeddedDocumentField(Embedded)
+    embedded_list_inner = mfields.EmbeddedDocumentListField(Embedded)
 
-    related_inner = db.ReferenceField(Related)
-    related_list_inner = db.ListField(db.ReferenceField(Related))
+    related_inner = mfields.ReferenceField(Related)
+    related_list_inner = mfields.ListField(mfields.ReferenceField(Related))
 
 
 @pytest.fixture()
@@ -64,7 +64,41 @@ def main_record(db):
         related_list_inner=[rel1, rel2]
     )
 
+class E1(mfields.EmbeddedDocument):
+    value = mfields.StringField()
 
+class E2(mfields.EmbeddedDocument):
+    e1 = mfields.EmbeddedDocumentField(E1)
+
+class Doc(mfields.Document):
+    e2 = mfields.EmbeddedDocumentField(E2)
+
+@pytest.fixture()
+def nested(db):
+    return Doc.objects.create(
+        e2=E2(
+            e1=E1(
+                value="test"
+            )
+        )
+    )
+
+@pytest.mark.test_not_full_fk_serialization
+def test_not_full_fk_serialization(nested):
+
+    class S(ModelSerializer):
+        field = fields.ForeignKeyField("e2__e1")
+
+        class Meta:
+            model = Doc
+            fields = ("field", )
+
+    out = S(Doc.objects.all()).serialize()
+    assert out == [{
+        "field": {
+            "value": "test"
+        }
+    }]
 
 @pytest.mark.test_embedded_inner_serialization
 def test_embedded_inner_serialization(main_record):
