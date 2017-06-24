@@ -1,4 +1,5 @@
 import datetime
+import decimal
 
 from bson.dbref import DBRef
 from flask import json
@@ -172,6 +173,19 @@ class IntegerField(BaseField):
             return int(value)
         except:
             raise ValidationError("Integer is required")
+
+
+class DecimalField(BaseField):
+
+    def to_python(self, value):
+        return value
+
+    def validate(self, value):
+        try:
+            return decimal.Decimal(value)
+        except:
+            raise ValidationError('Decimal is required')
+
 
 # TODO: validate URL
 class URLField(BaseField):

@@ -14,7 +14,7 @@ def validate(serializerCls):
                 out.status_code = 400
                 return out
 
-            return view_func(serializer=s, *a, **k)
+            return view_func(*a, serializer=s, **k)
         return inner
     return dec
 

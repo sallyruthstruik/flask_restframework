@@ -13,7 +13,8 @@ FIELD_MAPPING = {
     db.URLField: fields.URLField,
     db.EmbeddedDocumentListField: fields.ListField,
     db.ListField: fields.ListField,
-    db.DictField: fields.DictField
+    db.DictField: fields.DictField,
+    db.DecimalField: fields.DecimalField
 }
 
 def get_fields(model):
