@@ -409,3 +409,12 @@ class DictField(BaseField):
             raise ValidationError("Dict is required!")
 
         return value
+
+
+class SequenceField(BaseField):
+
+    def to_python(self, value):
+        print(value, type(value))
+        return value
+
+

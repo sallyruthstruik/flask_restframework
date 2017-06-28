@@ -10,6 +10,7 @@ FIELD_MAPPING = {
     db.EmbeddedDocumentField: fields.EmbeddedField,
     db.ReferenceField: fields.PrimaryKeyRelatedField,
     db.IntField: fields.IntegerField,
+    db.SequenceField: fields.SequenceField,
     db.URLField: fields.URLField,
     db.EmbeddedDocumentListField: fields.ListField,
     db.ListField: fields.ListField,
