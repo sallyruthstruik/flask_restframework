@@ -1,3 +1,5 @@
+import json
+
 from flask.ext.restframework.tests.compat import mock
 
 import mongoengine as m
@@ -57,11 +59,14 @@ class Resource(ModelResource):
     def get_queryset(self):
         return Doc._get_collection().find()
 
-def test_fetch_data_with_cursor(complex_doc):
+@pytest.mark.test_fetch_data_with_cursor
+def test_fetch_data_with_cursor(app, complex_doc):
     request = mock.Mock()
 
-    resp = Resource(request).get(request)
+    with app.test_request_context():
+        resp = Resource(request).get(request)
 
+    # data = json.loads(resp.data.decode("utf-8"))
     assert resp.json[0]["inner_list"] == [{'value': '4'}, {'value': '5'}]
     assert len(resp.json[0]["ref_list"]) == 2
     assert resp.json[0]["inner"] == {"value": "3"}

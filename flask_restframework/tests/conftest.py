@@ -6,7 +6,9 @@ from flask.ext.mongoengine import MongoEngine
 @pytest.fixture()
 def app():
     app = Flask(__name__)
-    return app
+
+    with app.app_context():
+        yield app
 
 @pytest.fixture()
 def db(app):
