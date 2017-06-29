@@ -109,6 +109,10 @@ class QuerysetWrapper(object):
             return MongoDbQuerySet(qs, MongoInstanceWrapper)
         elif isinstance(qs, Cursor):
             return CursorQuerySet(qs, CursorInstanceWrapper)
+        elif callable(qs):
+            return cls.from_queryset(qs())
+        elif isinstance(qs, QuerysetWrapper):
+            return qs
 
         raise TypeError("Unknown type {}".format(type(qs)))
 
@@ -143,6 +147,13 @@ class QuerysetWrapper(object):
         """
         raise NotImplementedError
 
+    def filter_by(self, **filters):
+        """
+        Should filter queryset by filters (Django style filtering)
+        Returns new queryset
+        """
+        raise NotImplementedError
+
 
 class DummyQuerySet(QuerysetWrapper):
 
@@ -154,6 +165,9 @@ class DummyQuerySet(QuerysetWrapper):
 
 class MongoDbQuerySet(QuerysetWrapper):
 
+    def filter_by(self, **filters):
+        return MongoDbQuerySet(self.data.filter(**filters), self.wrapperType)
+
     def slice(self, frm, to):
         return MongoDbQuerySet(self.data[frm:to], self.wrapperType)
 
@@ -164,5 +178,20 @@ class MongoDbQuerySet(QuerysetWrapper):
         return self.data.count()
 
 class CursorQuerySet(QuerysetWrapper):
-    pass
+
+    def __init__(self, *a, **k):
+        super(CursorQuerySet, self).__init__(*a, **k)
+        self.data = list(self.data)
+
+    def count(self):
+        return len(self.data)
+
+    def filter_by(self, id=None):
+        return CursorQuerySet(filter(
+            lambda item: item["_id"]==id,
+            self.data
+        ), wrapperType=self.wrapperType)
+
+    def slice(self, frm, to):
+        return self.data[frm: to]
 

@@ -297,6 +297,40 @@ class ForeignKeyField(BaseRelatedField):
             return dict(value.to_dict())
         return value
 
+
+class ReferenceField(BaseField):
+    """
+    This fields allows you to join results.
+    It can be used with MongoEngine ReferenceField or with custom querysets
+    and join rules.
+
+
+    """
+
+    queryset = None #type: QuerysetWrapper
+
+    def __init__(self, serializer, queryset, **k):
+
+        queryset = QuerysetWrapper.from_queryset(queryset)
+
+        super(ReferenceField, self).__init__(**k)
+        self.nested_serializer = serializer
+        self.queryset = queryset
+
+    def to_json(self, value):
+        if isinstance(value, DBRef):
+            pk = value.id
+        else:
+            pk = value.get_id()
+
+        return self.nested_serializer(
+            self.queryset.filter_by(
+                id=pk
+            )
+        ).serialize()[0]
+
+
+
 class PrimaryKeyRelatedField(BaseRelatedField):
 
     @classmethod

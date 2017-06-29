@@ -1,5 +1,6 @@
 import json
 
+from flask.ext.restframework.queryset_wrapper import QuerysetWrapper
 from flask.ext.restframework.tests.compat import mock
 
 import mongoengine as m
@@ -73,8 +74,45 @@ def test_fetch_data_with_cursor(app, complex_doc):
 
 
 
+@pytest.mark.test_join_data
+def test_join_data(app, complex_doc):
 
+    class Nested(BaseSerializer):
+        value = fields.StringField()
 
+    class S(ModelSerializer):
+
+        ref = fields.ReferenceField(
+            Nested, queryset=Ref.objects.all
+        )
+
+        nested_list = fields.ListField(fields.ReferenceField(Nested, queryset=Ref.objects.all))
+
+        class Meta:
+            model = Doc
+            fields = ("id", )
+
+    data = S(QuerysetWrapper.from_queryset(Doc.objects.no_dereference())).serialize()
+    assert data[0]["ref"] == {
+        "value": "1"
+    }
+
+    #test with custom queryset
+    class S(ModelSerializer):
+        ref = fields.ReferenceField(
+            Nested, queryset=lambda: Ref._get_collection().find()
+        )
+
+        nested_list = fields.ListField(fields.ReferenceField(Nested, queryset=Ref.objects.all))
+
+        class Meta:
+            model = Doc
+            fields = ("id", )
+
+    data = S(QuerysetWrapper.from_queryset(Doc.objects.no_dereference())).serialize()
+    assert data[0]["ref"] == {
+        "value": "1"
+    }
 
 
 
