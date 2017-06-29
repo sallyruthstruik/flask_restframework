@@ -4,6 +4,7 @@ from flask_mongoengine import MongoEngine
 from mongoengine import fields as mfields
 from pymongo.database import Database
 
+from flask.ext.restframework.queryset_wrapper import QuerysetWrapper
 from flask_restframework import fields
 from flask_restframework.serializer.model_serializer import ModelSerializer
 
@@ -71,7 +72,7 @@ def test_not_full_fk_serialization(nested):
             model = Doc
             fields = ("field", )
 
-    out = S(Doc.objects.all()).serialize()
+    out = S(QuerysetWrapper.from_queryset(Doc.objects.all())).serialize()
     assert out == [{
         "field": {
             "value": "test"
@@ -97,7 +98,7 @@ def test_embedded_inner_serialization(main_record):
             model = Main
             fields = ("embedded_inner", "embedded_list_inner")
 
-    data = Serializer(Main.objects.all()).to_python()
+    data = Serializer(QuerysetWrapper.from_queryset(Main.objects.all())).serialize()
 
     assert len(data) == 1
     assert data[0] == dict(

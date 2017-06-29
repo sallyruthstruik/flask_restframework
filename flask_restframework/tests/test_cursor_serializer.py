@@ -1,4 +1,4 @@
-from unittest.mock import Mock
+from flask.ext.restframework.tests.compat import mock
 
 import mongoengine as m
 import pytest
@@ -58,7 +58,7 @@ class Resource(ModelResource):
         return Doc._get_collection().find()
 
 def test_fetch_data_with_cursor(complex_doc):
-    request = Mock()
+    request = mock.Mock()
 
     resp = Resource(request).get(request)
 

@@ -1,6 +1,7 @@
 import six
 from mongoengine.document import Document
 
+from flask.ext.restframework.queryset_wrapper import InstanceWrapper, MongoInstanceWrapper
 from flask_restframework.serializer.base_serializer import BaseSerializer, _BaseSerializerMetaClass
 
 
@@ -15,6 +16,11 @@ class _ModelSerializerMetaclass(_BaseSerializerMetaClass):
 
         if name == "ModelSerializer":
             return declared
+
+        # if declared Meta.fields, update it from declared only fields
+        if "Meta" in attrs:
+            if hasattr(attrs["Meta"], "fields"):
+                attrs["Meta"].fields = tuple(set(attrs["Meta"].fields).union(declared.keys()))
 
         try:
             model = attrs["Meta"].model
@@ -50,7 +56,7 @@ class ModelSerializer(BaseSerializer):
         >>>     class Meta:
         >>>         model = Col
         >>>
-        >>> data = S(Col.objects.all()).to_python()
+        >>> data = S(Col.objects.all()).serialize()
 
     """
 
@@ -61,22 +67,18 @@ class ModelSerializer(BaseSerializer):
             raise ValueError("You should specify Meta class with model attribute")
 
     def create(self, validated_data):
-        "Performs create instance. Returns model intance"
-        return self.get_model().objects.create(**validated_data)
+        "Performs create instance. Returns wrapped model intance"
+        return MongoInstanceWrapper(self.get_model().objects.create(**validated_data))
 
     def update(self, instance, validated_data):
-        "Performs update for instance. Returns instance with updated fields"
+        #type: (InstanceWrapper, dict)->InstanceWrapper
+        "Performs update for instance. Returns wrapped instance with updated fields"
 
+        assert isinstance(instance, InstanceWrapper)
         #don't update id of document
         validated_data.pop("id", None)
 
-        for key, value in six.iteritems(validated_data):
-            try:
-                setattr(instance, key, value)
-            except Exception as e:
-                print(key, value)
-
-        instance.save()
+        instance.update(validated_data)
 
         return instance
 

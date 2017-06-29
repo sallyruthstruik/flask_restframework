@@ -1,3 +1,4 @@
+#coding: utf8
 from mongoengine.base.document import BaseDocument
 from mongoengine.queryset.queryset import QuerySet
 from pymongo.cursor import Cursor
@@ -8,21 +9,49 @@ class InstanceWrapper(object):
     def __init__(self, item):
         self.item = item
 
+    def get_id(self):
+        """
+        Возвращает id записи
+        """
+        raise NotImplementedError
+
     def get_field(self, key):
         """
         Возвращает значение поля key для обернутой записи
         """
         raise NotImplementedError
 
+    def update(self, validated_data):
+        raise NotImplementedError
+
+    def to_dict(self):
+        """
+        Should return dict representation of instance
+        """
+        raise NotImplementedError
+
 
 class MongoInstanceWrapper(InstanceWrapper):
 
+    def to_dict(self):
+        return self.item.to_mongo()
+
+    def get_id(self):
+        return self.item.id
+
+    def update(self, validated_data):
+        for key, value in validated_data.items():
+            setattr(self.item, key, value)
+
+        self.item.save()
+
+
     def get_field(self, key):
-        out = None
+        out = self.item
 
         for part in key.split("__"):
             try:
-                out = getattr(self.item, part)
+                out = getattr(out, part)
             except:
                 return None
 
@@ -42,6 +71,12 @@ class MongoInstanceWrapper(InstanceWrapper):
 
 
 class CursorInstanceWrapper(InstanceWrapper):
+
+    def to_dict(self):
+        return dict(self.item)
+
+    def get_id(self):
+        return self.item["_id"]
 
     def get_field(self, key):
         if key == "id":
@@ -123,7 +158,7 @@ class MongoDbQuerySet(QuerysetWrapper):
         return MongoDbQuerySet(self.data[frm:to], self.wrapperType)
 
     def get(self, id):
-        pass
+        return self.wrapperType(self.data.get(id=id))
 
     def count(self):
         return self.data.count()

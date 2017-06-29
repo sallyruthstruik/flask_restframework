@@ -159,12 +159,14 @@ class BaseSerializer:
 
         data = self._get_queryset() #type: QuerysetWrapper
 
-        output = [
-            self._serialize_item(item)
-            for item in data.get_data()
-        ]
+        if isinstance(data, QuerysetWrapper):
+            output = [
+                self._serialize_item(item)
+                for item in data.get_data()
+            ]
+        else:
+            output = self._serialize_item(data)
 
-        print(output)
         return output
 
 
@@ -283,6 +285,7 @@ class BaseSerializer:
         <key in serializer>: <field instance>
         """
         out = {}
+
         if hasattr(self, "Meta") and hasattr(self.Meta, "fk_fields"):
             for key in self.Meta.fk_fields:
                 if "__" not in key:
@@ -294,10 +297,6 @@ class BaseSerializer:
                     raise ValueError("Incorrect field: {}".format(mainFkField))
 
                 out[key] = fields[mainFkField]
-
-        for key, value in six.iteritems(self.get_declared_only_fields()):
-            if isinstance(value, ForeignKeyField):
-                out[key] = value
 
         return out
 
@@ -319,8 +318,6 @@ class BaseSerializer:
             assert isinstance(field, BaseField), field
 
             value = field.get_value_from_model_object(item, key)
-
-            out[key] = field.to_python(value)
 
         for key, field in six.iteritems(self.get_fk_fields()):
             assert isinstance(field, BaseRelatedField)
@@ -344,10 +341,7 @@ class BaseSerializer:
         for key, value in self.get_fields().items():
             assert isinstance(value, BaseField)
 
-            if isinstance(value, BaseRelatedField):
-                key = value.document_fieldname or key
-
-            out[key] = value.to_json(item.get_field(key))
+            out[key] = value.to_json(value.get_value_from_model_object(item, key))
 
         for key, value in self.get_fk_fields().items():
             out[key] = value.to_json(item.get_field(key))
@@ -388,9 +382,9 @@ class BaseSerializer:
 
         otherwise raises TypeError
         """
-        if isinstance(self._data, QuerysetWrapper):
+        if isinstance(self._data, (QuerysetWrapper, InstanceWrapper)):
             return self._data
-        raise TypeError("Can't serialize data, no queryset passed!")
+        raise TypeError("Can't serialize data, no queryset passed! _data type is {}".format(type(self._data)))
 
 
 

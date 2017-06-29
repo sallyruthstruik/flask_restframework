@@ -122,6 +122,7 @@ class BaseField(object):
 
         Usually returns .to_python
         """
+        # TODO: remove all to_python in Field classes
         return self.to_python(value)
 
     # TODO: validate MUST be implemented!
@@ -246,7 +247,8 @@ class MethodField(BaseField):
         self.methodName = methodName
 
     def get_value_from_model_object(self, doc, field):
-        return getattr(self.serializer, self.methodName)(doc)
+        assert isinstance(doc, InstanceWrapper)
+        return getattr(self.serializer, self.methodName)(doc.item)
 
     def to_python(self, value):
         return value
@@ -270,15 +272,8 @@ class BaseRelatedField(BaseField):
         :param doc: Document
         :param field: string fieldname
         """
-        out = doc
-
-        try:
-            for part in (self.document_fieldname or field).split("__"):
-                out = getattr(out, part)
-        except AttributeError:
-            return None
-
-        return out
+        assert isinstance(doc, InstanceWrapper)
+        return doc.get_field(self.document_fieldname or field)
 
 class ForeignKeyField(BaseRelatedField):
     """
@@ -298,8 +293,8 @@ class ForeignKeyField(BaseRelatedField):
         return value
 
     def to_json(self, value):
-        if isinstance(value, db.EmbeddedDocument):
-            return dict(value.to_mongo())
+        if isinstance(value, InstanceWrapper):
+            return dict(value.to_dict())
         return value
 
 class PrimaryKeyRelatedField(BaseRelatedField):
@@ -322,6 +317,8 @@ class PrimaryKeyRelatedField(BaseRelatedField):
         return value
 
     def to_json(self, value):
+        if isinstance(value, DBRef):
+            return str(value.id)
         return str(value)
 
     def validate(self, value):
@@ -352,11 +349,6 @@ class ListField(BaseField):
         super(ListField, self).__init__(**k)
         self.inner_serializer = innerField  # type: BaseField
 
-    def to_python(self, value):
-        if value:
-            print(value)
-            return list(map(self.inner_serializer.to_python, value))
-
     def to_json(self, value):
         if value:
             return list(map(self.inner_serializer.to_json, value))
@@ -386,15 +378,11 @@ class EmbeddedField(BaseRelatedField):
         self.inner_serializer = inner_serializer    #type: ModelSerializer
         self._read_only = read_only
 
-    def to_python(self, value):
-        if value:
-            return self.inner_serializer(value).to_python()
-
     def to_json(self, value):
         if value:
-            return self.inner_serializer(
-                QuerysetWrapper.from_instance(value)
-            ).serialize()[0]
+            if isinstance(value, InstanceWrapper):
+                return self.inner_serializer(value).serialize()
+            return value
 
     def validate(self, value):
         if not isinstance(value, dict):

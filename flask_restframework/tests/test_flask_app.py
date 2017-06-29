@@ -7,10 +7,9 @@ from pprint import pprint
 import pytest
 from pymongo.database import Database
 
-try:
-    from unittest.mock import Mock, call
-except ImportError:
-    from mock import Mock, call #type: ignore
+from flask.ext.restframework.queryset_wrapper import QuerysetWrapper, MongoInstanceWrapper
+from flask.ext.restframework.tests.compat import mock
+
 
 import six
 from flask import jsonify
@@ -345,7 +344,7 @@ class SimpleFlaskAppTest(unittest.TestCase):
             value = fields.StringField()
             created = fields.DateTimeField(read_only=True)
 
-        data = S(Col.objects.all()).to_python()
+        data = S(QuerysetWrapper.from_queryset(Col.objects.all())).serialize()
         self.assertEqual(len(data), 2)
         self.assertEqual(
             list(map(lambda i: i["value"], data)),
@@ -394,12 +393,13 @@ class SimpleFlaskAppTest(unittest.TestCase):
                 fields = ("inner", "value", "created", "method_field")
                 fk_fields = ("inner__value", "inner__deep__value")
 
-        data = Serializer(Col.objects.all()).to_python()
+        data = Serializer(
+            QuerysetWrapper.from_queryset(Col.objects.all())
+        ).serialize()
 
         for item in data:
             self.assertTrue("value" in item)
             self.assertEqual(item["value"], item["method_field"])
-            self.assertTrue(type(item["created"]), datetime.datetime)
             self.assertEqual(item["renamed"], item["inner__deep__value"])
 
 class TestMiddlewares(SimpleFlaskAppTest):
@@ -469,7 +469,7 @@ class TestMiddlewares(SimpleFlaskAppTest):
         self.assertEqual(resp.data, b"basic")
 
     def test_middleware_can_interrupt_execution(self):
-        m = Mock()
+        m = mock.Mock()
 
         class Middleware1(BaseMiddleware):
 
@@ -496,14 +496,14 @@ class TestMiddlewares(SimpleFlaskAppTest):
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.data, b"INTERRUPTED")
         self.assertEqual(m.call_args_list, [
-            call("before-1"),
-            call("after-2"),
-            call("after-1")
+            mock.call("before-1"),
+            mock.call("after-2"),
+            mock.call("after-1")
         ])
 
 
     def test_middlewares_order(self):
-        m = Mock()
+        m = mock.Mock()
 
         class Middleware1(BaseMiddleware):
 
@@ -527,10 +527,10 @@ class TestMiddlewares(SimpleFlaskAppTest):
 
         self.client.get("/test_middleware")
         self.assertEqual(m.call_args_list, [
-            call("before-1"),
-            call("before-2"),
-            call("after-2"),
-            call("after-1")
+            mock.call("before-1"),
+            mock.call("before-2"),
+            mock.call("after-2"),
+            mock.call("after-1")
         ])
 
 
@@ -579,9 +579,9 @@ class TestModelResources(SimpleFlaskAppTest):
         serializer = self.Serializer(data,
                                      context={"instance": instance})
 
-        serializer.update(instance, data)
+        serializer.update(MongoInstanceWrapper(instance), data)
 
-
+    @pytest.mark.test_reference_field_serialization
     def test_reference_field_serialization(self):
 
         class Ref(db.Document):
@@ -610,12 +610,12 @@ class TestModelResources(SimpleFlaskAppTest):
             class Meta:
                 model = Doc
 
-        data = S(Doc.objects.all()).serialize()[0]
+        data = S(QuerysetWrapper.from_queryset(Doc.objects.no_dereference())).serialize()[0]
 
         self.assertEqual(data["ref"], str(r1.id))
         self.assertEqual(data["ref_list"], list(map(str, [r1.id, r2.id])))
 
-
+    @pytest.mark.test_update_embedded_doc
     def test_update_embedded_doc(self):
 
         doc = self.BaseDoc.objects.create(
@@ -634,7 +634,7 @@ class TestModelResources(SimpleFlaskAppTest):
         self.assertTrue(isinstance(serializer.cleaned_data["inner"], self.EmbeddedDoc))
 
         #serializer should correctly update instance
-        serializer.update(doc, serializer.cleaned_data)
+        serializer.update(MongoInstanceWrapper(doc), serializer.cleaned_data)
         self.assertEqual(self.BaseDoc.objects.get(id=doc.id).inner.value, "2")
 
         #serializer should correctly validate instance
@@ -821,7 +821,7 @@ class TestModelSerializer(SimpleFlaskAppTest):
                         "olala",
                     )
 
-            Serializer(self.TestCol.objects.all()).to_python()
+            Serializer(self.TestCol.objects.all()).serialize()
 
         self.assertRaises(TypeError, create)
 

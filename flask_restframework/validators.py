@@ -71,7 +71,7 @@ class UniqueValidator(BaseValidator):
 
         qs = self.qs
         if instance:
-            qs = qs.filter(id__ne=instance.id)
+            qs = qs.filter(id__ne=instance.get_id())
 
         fieldname = field.fieldname
 

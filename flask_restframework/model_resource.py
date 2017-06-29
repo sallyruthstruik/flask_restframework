@@ -131,6 +131,7 @@ class CreateMixin:
             return out
 
         instance = serializer.create(serializer.cleaned_data)
+        assert isinstance(instance, InstanceWrapper)
 
         self.after_create(instance, serializer.cleaned_data)
 
@@ -139,7 +140,10 @@ class CreateMixin:
 
 class RetrieveMixin:
     def get_object(self, request, pk):
+        assert isinstance(self, GenericResource)
         obj = self.get_instance(pk) #type: InstanceWrapper
+        assert isinstance(obj, InstanceWrapper)
+
         return jsonify(self.serializer_class(obj).serialize())
 
 
@@ -154,6 +158,8 @@ class UpdateMixin:
     def _perform_update(self, pk, request, part=False):
         data = self.get_data(request)
         instance = self.get_instance(pk)
+
+        assert isinstance(instance, InstanceWrapper)
 
         serializer = self.serializer_class(data, context={
             "instance": instance,
@@ -171,7 +177,7 @@ class UpdateMixin:
             key: value
             for key, value in six.iteritems(serializer.cleaned_data)
             if key in data
-            }
+        }
 
         updatedInstance = serializer.update(instance, validated_data=validated_data)
         self.after_update(oldInstance, updatedInstance, validated_data)
