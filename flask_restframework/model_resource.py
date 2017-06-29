@@ -3,8 +3,10 @@ import copy
 import six
 from flask import jsonify
 from flask.globals import current_app
+from flask.wrappers import Request
 from mongoengine.errors import DoesNotExist
 
+from flask.ext.restframework.queryset_wrapper import QuerysetWrapper, InstanceWrapper
 from flask_restframework.serializer.base_serializer import BaseSerializer
 from flask_restframework.exceptions import NotFound
 from flask_restframework.filter_backends import BaseBackend
@@ -45,10 +47,16 @@ class GenericResource(BaseResource):
     def get_queryset(self):
         return self.queryset
 
+    def get_adaptated_queryset(self):
+        # type: ()->QuerysetWrapper
+        qs = self.get_queryset()
+        return QuerysetWrapper.from_queryset(qs)
+
     def get_instance(self, pk):
+        # type: ()->InstanceWrapper
         "returns one instance from queryset by its PK"
         try:
-            return self.get_queryset().get(id=pk)
+            return self.get_adaptated_queryset().get(id=pk)
         except DoesNotExist:
             raise NotFound("Object not found")
 
@@ -84,9 +92,13 @@ class ListObjectsMixin:
     Returns array of (paginated if set pagination_class) elements
     """
     def get(self, request):
-        qs = self.get_queryset()
+        assert isinstance(self, ModelResource)
+
+        qs = self.get_adaptated_queryset()
 
         qs = self.filter_qs(qs)
+
+        assert isinstance(qs, QuerysetWrapper)
 
         paginationCls = self.get_pagination_class()
 
@@ -127,7 +139,7 @@ class CreateMixin:
 
 class RetrieveMixin:
     def get_object(self, request, pk):
-        obj = self.get_instance(pk)
+        obj = self.get_instance(pk) #type: InstanceWrapper
         return jsonify(self.serializer_class(obj).serialize())
 
 

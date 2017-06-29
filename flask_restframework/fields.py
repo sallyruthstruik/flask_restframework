@@ -4,6 +4,7 @@ import decimal
 from bson.dbref import DBRef
 from flask import json
 
+from flask.ext.restframework.queryset_wrapper import InstanceWrapper, QuerysetWrapper
 from flask_restframework.utils.util import wrap_mongoengine_errors
 from flask_restframework.validators import UniqueValidator
 from flask_restframework.validators import BaseValidator
@@ -121,15 +122,17 @@ class BaseField(object):
 
         Usually returns .to_python
         """
-        return value
+        return self.to_python(value)
 
     # TODO: validate MUST be implemented!
     def validate(self, value):
         pass
 
     def get_value_from_model_object(self, doc, field):
+        #type: (InstanceWrapper, str)->any
         "returns value for fieldName field and document doc"
-        return getattr(doc, field)
+
+        return doc.get_field(field)
 
 
 
@@ -319,7 +322,7 @@ class PrimaryKeyRelatedField(BaseRelatedField):
         return value
 
     def to_json(self, value):
-        return value
+        return str(value)
 
     def validate(self, value):
         instance = self.related_model.objects.filter(id=value).first()
@@ -351,7 +354,12 @@ class ListField(BaseField):
 
     def to_python(self, value):
         if value:
+            print(value)
             return list(map(self.inner_serializer.to_python, value))
+
+    def to_json(self, value):
+        if value:
+            return list(map(self.inner_serializer.to_json, value))
 
     def validate(self, value):
         if not isinstance(value, list):
@@ -382,6 +390,12 @@ class EmbeddedField(BaseRelatedField):
         if value:
             return self.inner_serializer(value).to_python()
 
+    def to_json(self, value):
+        if value:
+            return self.inner_serializer(
+                QuerysetWrapper.from_instance(value)
+            ).serialize()[0]
+
     def validate(self, value):
         if not isinstance(value, dict):
             raise ValidationError("Object is required")
@@ -402,6 +416,12 @@ class DictField(BaseField):
                 return value
 
         return value
+
+    def to_json(self, value):
+        if value:
+            assert isinstance(value, InstanceWrapper)
+
+            return dict(value.item)
 
     def validate(self, value):
 

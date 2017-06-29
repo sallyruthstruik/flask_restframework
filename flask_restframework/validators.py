@@ -4,7 +4,7 @@ from flask_restframework.exceptions import ValidationError
 
 class BaseValidator(object):
 
-    message = None
+    message = None  #type: str
 
     def __init__(self, message=None):
 

@@ -10,7 +10,7 @@ from pymongo.database import Database
 try:
     from unittest.mock import Mock, call
 except ImportError:
-    from mock import Mock, call
+    from mock import Mock, call #type: ignore
 
 import six
 from flask import jsonify
@@ -30,7 +30,6 @@ from flask_restframework.validators import UniqueValidator
 from flask_restframework.validators import RegexpValidator
 from flask_restframework.decorators import list_route, detail_route
 from flask_restframework import fields
-from flask_restframework.adapters import MongoEngineQuerysetAdapter
 from flask_restframework.decorators import validate
 from flask_restframework.model_resource import ModelResource
 from flask_restframework.pagination import DefaultPagination
@@ -359,6 +358,7 @@ class SimpleFlaskAppTest(unittest.TestCase):
 
         self.assertTrue("created" not in ser.cleaned_data)
 
+    @pytest.mark.testModelSerialization
     def testModelSerialization(self):
 
         class DeepInner(db.EmbeddedDocument):
@@ -391,7 +391,7 @@ class SimpleFlaskAppTest(unittest.TestCase):
 
             class Meta:
                 model = Col
-                fields = ("value", "created", "method_field")
+                fields = ("inner", "value", "created", "method_field")
                 fk_fields = ("inner__value", "inner__deep__value")
 
         data = Serializer(Col.objects.all()).to_python()

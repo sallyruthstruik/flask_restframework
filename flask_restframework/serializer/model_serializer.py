@@ -1,12 +1,42 @@
 import six
-
+from mongoengine.document import Document
 
 from flask_restframework.serializer.base_serializer import BaseSerializer, _BaseSerializerMetaClass
 
 
 from ..utils import mongoengine_model_meta as model_meta
 
+class _ModelSerializerMetaclass(_BaseSerializerMetaClass):
+    field_mapping = model_meta.FIELD_MAPPING
 
+    @classmethod
+    def _get_declared_fields(cls, name, bases, attrs):
+        declared = _BaseSerializerMetaClass._get_declared_fields(name, bases, attrs)
+
+        if name == "ModelSerializer":
+            return declared
+
+        try:
+            model = attrs["Meta"].model
+        except:
+            raise TypeError("You should define Meta class with model attribute")
+
+        fieldsFromModel = {}
+
+        for key, fieldCls in six.iteritems(model_meta.get_fields(model)):
+            if fieldCls not in cls.field_mapping:
+                raise ValueError("No mapping for field {}".format(fieldCls))
+
+            fieldsFromModel[key] = cls.field_mapping[fieldCls].from_mongoengine_field(
+                model_meta.get_field(model, key)
+            )
+
+        fieldsFromModel.update(declared)
+
+        return fieldsFromModel
+
+
+@six.add_metaclass(_ModelSerializerMetaclass)
 class ModelSerializer(BaseSerializer):
     """
     Generic serializer for mongoengine models.
@@ -23,40 +53,12 @@ class ModelSerializer(BaseSerializer):
         >>> data = S(Col.objects.all()).to_python()
 
     """
-    field_mapping = model_meta.FIELD_MAPPING
 
     def get_model(self):
         try:
             return self.Meta.model
         except:
             raise ValueError("You should specify Meta class with model attribute")
-
-    _fields = None
-    def get_fields(self):
-        """
-        Returns all field for this serializer.
-        It can be overrided.
-
-        :rtype:
-        """
-        if not self._fields:
-            model = self.get_model()
-
-            fieldsFromModel = {}
-
-            for key, fieldCls in six.iteritems(model_meta.get_fields(model)):
-                if fieldCls not in self.field_mapping:
-                    raise ValueError("No mapping for field {}".format(fieldCls))
-
-                fieldsFromModel[key] = self.field_mapping[fieldCls].from_mongoengine_field(
-                    model_meta.get_field(model, key)
-                )
-
-            fieldsFromModel.update(super(ModelSerializer, self).get_fields())
-
-            self._fields = fieldsFromModel
-
-        return self._fields
 
     def create(self, validated_data):
         "Performs create instance. Returns model intance"

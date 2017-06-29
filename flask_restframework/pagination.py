@@ -1,10 +1,18 @@
 from collections import namedtuple
 
+from flask.ext.restframework.queryset_wrapper import QuerysetWrapper
+
 PageInfo = namedtuple("PageInfo", ["page", "page_size"])
 
 class DefaultPagination:
+    qs = None   #type: QuerysetWrapper
+
     def __init__(self, qs, total=None):
-        self.qs = qs
+        #type: (QuerysetWrapper, int)->None
+
+        assert isinstance(qs, QuerysetWrapper)
+
+        self.qs = qs    #type: QuerysetWrapper
         self.total = 0  #total objects count
         self.count_pages = 0    #total count of pages
         self.page = 0       #current page
@@ -32,7 +40,7 @@ class DefaultPagination:
         self.page = page
         self.page_size = page_size
 
-        self.qs = self.qs[page_size*(page-1):page_size*page]
+        self.qs = self.qs.slice(page_size*(page-1), page_size*page) #type: QuerysetWrapper
 
 
     def update_response(self, data):

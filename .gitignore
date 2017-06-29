@@ -12,3 +12,5 @@ dist
 .hg
 .tox
 .hgignore
+.coverage
+.mypy_cache

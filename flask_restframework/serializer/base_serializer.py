@@ -3,6 +3,7 @@ import six as six
 from mongoengine.queryset.queryset import QuerySet
 from werkzeug.exceptions import BadRequest
 
+from flask.ext.restframework.queryset_wrapper import QuerysetWrapper, InstanceWrapper
 from flask_restframework.fields import BaseRelatedField
 from flask_restframework.fields import ForeignKeyField
 
@@ -20,7 +21,7 @@ class _BaseSerializerMetaClass(type):
     """
 
     @classmethod
-    def _get_declared_fields(cls, bases, attrs):
+    def _get_declared_fields(cls, name, bases, attrs):
         fields = [(field_name, attrs.pop(field_name))
                   for field_name, obj in list(attrs.items())
                   if isinstance(obj, BaseField)]
@@ -35,7 +36,7 @@ class _BaseSerializerMetaClass(type):
         return OrderedDict(fields)
 
     def __new__(cls, name, bases, attrs):
-        attrs['_declared_fields'] = cls._get_declared_fields(bases, attrs)
+        attrs['_declared_fields'] = cls._get_declared_fields(name, bases, attrs)
         return super(_BaseSerializerMetaClass, cls).__new__(cls, name, bases, attrs)
 
 @six.add_metaclass(_BaseSerializerMetaClass)
@@ -89,7 +90,9 @@ class BaseSerializer:
 
     _declared_fields = None     #type: OrderedDict
 
-    def __init__(self, data, context=None):
+    def __init__(
+            self, data, context=None
+    ):
 
         self._data = data    #original data
         self._cleaned_data = {}     #validated data
@@ -98,7 +101,33 @@ class BaseSerializer:
         self._bind_self_to_fields()
 
     def get_fields(self):
-        "returns mapping: <fieldName>: <Field>"
+        """
+        returns mapping: <fieldName>: <Field>
+
+        Returns:
+
+            * Only fields declared in Meta.fields if present (+ class-defined fields)
+            * All fields, except Meta.excluded if present
+        """
+
+        output = {}
+
+        if hasattr(self, "Meta"):
+            meta = self.Meta
+
+            if hasattr(meta, "fields"):
+                return {
+                    key: value
+                    for key, value in self._declared_fields.items()
+                    if key in meta.fields
+                }
+
+            if hasattr(meta, "excluded"):
+                return {
+                    key:value
+                    for key, value in self._declared_fields.items()
+                    if key not in meta.excluded
+                }
 
         return self._declared_fields
 
@@ -112,10 +141,15 @@ class BaseSerializer:
             output = []
             for item in self._data:
                 output.append(self._item_to_python(item))
+        elif isinstance(self._data, QuerysetWrapper):
+
+            output = []
+            for item in self._data.get_data():
+                output.append(self._item_to_python(item))
         else:
             output = self._item_to_python(self._data)
 
-        return output
+
 
     def serialize(self):
         """
@@ -123,15 +157,16 @@ class BaseSerializer:
         and perform serialization to json-compatible array
         """
 
-        data = self.to_python()
+        data = self._get_queryset() #type: QuerysetWrapper
 
-        if isinstance(data, list):
-            out = []
-            for item in data:
-                out.append(self._serialize_item(item))
-            return out
-        else:
-            return self._serialize_item(data)
+        output = [
+            self._serialize_item(item)
+            for item in data.get_data()
+        ]
+
+        print(output)
+        return output
+
 
 
 
@@ -297,20 +332,25 @@ class BaseSerializer:
         return out
 
     def _serialize_item(self, item):
+        #type: (InstanceWrapper)->dict
         """
         Performs serialization for python representation of item.
         Uses Field.
         """
+        assert isinstance(item, InstanceWrapper)
+
         out = {}
 
         for key, value in self.get_fields().items():
             assert isinstance(value, BaseField)
-            if key in item:
-                out[key] = value.to_json(item[key])
+
+            if isinstance(value, BaseRelatedField):
+                key = value.document_fieldname or key
+
+            out[key] = value.to_json(item.get_field(key))
 
         for key, value in self.get_fk_fields().items():
-            if key in item:
-                out[key] = value.to_json(item[key])
+            out[key] = value.to_json(item.get_field(key))
 
         return out
 
@@ -339,6 +379,19 @@ class BaseSerializer:
         for fieldname, field in six.iteritems(self.get_fields()):
             field.serializer = self
             field.fieldname = fieldname
+
+    def _get_queryset(self):
+        #type: ()->QuerysetWrapper
+        """
+        Returns queryset from serializer if present
+        (If serializer was initialized with QuerySet or Document)
+
+        otherwise raises TypeError
+        """
+        if isinstance(self._data, QuerysetWrapper):
+            return self._data
+        raise TypeError("Can't serialize data, no queryset passed!")
+
 
 
 
