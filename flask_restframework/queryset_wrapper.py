@@ -37,6 +37,17 @@ class InstanceWrapper(object):
         """
         raise NotImplementedError
 
+    @classmethod
+    def from_instance(cls, item):
+        """
+        Returns wrapped instance
+        """
+        if isinstance(item, Document):
+            return MongoInstanceWrapper(item)
+        elif isinstance(item, dict):
+            return CursorInstanceWrapper
+
+        raise TypeError("Incorrect type {}".format(type(item)))
 
 class MongoInstanceWrapper(InstanceWrapper):
     item = None #type: Document
@@ -116,6 +127,9 @@ class QuerysetWrapper(object):
 
     @classmethod
     def from_queryset(cls, qs):
+        """
+        Returns wrapped queryset from passed qs
+        """
         if isinstance(qs, QuerySet):
             return MongoDbQuerySet(qs, MongoInstanceWrapper)
         elif isinstance(qs, Cursor):

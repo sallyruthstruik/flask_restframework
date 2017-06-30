@@ -114,6 +114,19 @@ class BaseSerializer:
             context
         )
 
+    @classmethod
+    def from_instance(cls, item, context=None):
+        """
+        Allows instantiate serializer for one item. Automativally wraps it.
+        :param item:
+        :param context:
+        :return:
+        """
+        return cls(
+            InstanceWrapper.from_instance(item),
+            context
+        )
+
     def get_fields(self):
         """
         returns mapping: <fieldName>: <Field>
