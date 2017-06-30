@@ -325,8 +325,10 @@ class ReferenceField(BaseField):
     def to_json(self, value):
         if isinstance(value, DBRef):
             pk = value.id
-        else:
+        elif isinstance(value, InstanceWrapper):
             pk = value.get_id()
+        else:
+            pk = value
 
         return self.nested_serializer(
             self.queryset.filter_by(

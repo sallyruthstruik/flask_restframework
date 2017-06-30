@@ -9,6 +9,7 @@ Welcome to Flask Restframework's documentation!
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+   changelog
 
 
 

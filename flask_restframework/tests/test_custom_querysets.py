@@ -97,6 +97,8 @@ def test_join_data(app, complex_doc):
         "value": "1"
     }
 
+    assert data == S(QuerysetWrapper.from_queryset(Doc._get_collection().find())).serialize()
+
     #test with custom queryset
     class S(ModelSerializer):
         ref = fields.ReferenceField(
