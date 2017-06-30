@@ -1,3 +1,15 @@
+"""
+
+Serializer API
+===================
+
+.. automodule:: flask_restframework.serializer.base_serializer
+    :members:
+
+.. automodule:: flask_restframework.queryset_wrapper
+    :members:
+
+"""
 __author__ = 'stas'
 __version__ = "0.0.27"
 

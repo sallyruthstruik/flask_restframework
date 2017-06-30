@@ -14,3 +14,4 @@ dist
 .hgignore
 .coverage
 .mypy_cache
+docs.sh

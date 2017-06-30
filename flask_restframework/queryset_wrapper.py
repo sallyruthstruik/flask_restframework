@@ -6,7 +6,12 @@ from pymongo.cursor import Cursor
 
 
 class InstanceWrapper(object):
+    """
+    Обертка для записи из базы.
 
+    Поддерживается Mongoengine Document и dict из курсора.
+
+    """
     def __init__(self, item):
         self.item = item
 
@@ -50,6 +55,9 @@ class InstanceWrapper(object):
         raise TypeError("Incorrect type {}".format(type(item)))
 
 class MongoInstanceWrapper(InstanceWrapper):
+    """
+    Обертка для Mongoengine Document записи
+    """
     item = None #type: Document
 
     def delete(self):
@@ -93,7 +101,9 @@ class MongoInstanceWrapper(InstanceWrapper):
 
 
 class CursorInstanceWrapper(InstanceWrapper):
-
+    """
+    Обертка для записи из pymongo.Cursor (по сути обычный dict)
+    """
     def to_dict(self):
         return dict(self.item)
 
@@ -120,7 +130,9 @@ class CursorInstanceWrapper(InstanceWrapper):
         return out
 
 class QuerysetWrapper(object):
-
+    """
+    Обертка для Queryset.
+    """
     def __init__(self, data, wrapperType):
         self.wrapperType = wrapperType
         self.data = data
@@ -189,7 +201,9 @@ class DummyQuerySet(QuerysetWrapper):
         return self.data
 
 class MongoDbQuerySet(QuerysetWrapper):
-
+    """
+    Обертка для MongoEngine Queryset
+    """
     def filter_by(self, **filters):
         return MongoDbQuerySet(self.data.filter(**filters), self.wrapperType)
 
@@ -203,7 +217,9 @@ class MongoDbQuerySet(QuerysetWrapper):
         return self.data.count()
 
 class CursorQuerySet(QuerysetWrapper):
-
+    """
+    Обертка для pymongo.Cursor
+    """
     def __init__(self, *a, **k):
         super(CursorQuerySet, self).__init__(*a, **k)
         self.data = list(self.data)
