@@ -180,11 +180,16 @@ class DecimalField(BaseField):
     def to_python(self, value):
         return value
 
+    def to_json(self, value):
+        if value:
+            return str(value)
+
     def validate(self, value):
-        try:
-            return decimal.Decimal(value)
-        except:
-            raise ValidationError('Decimal is required')
+        if value:
+            try:
+                return decimal.Decimal(value)
+            except:
+                raise ValidationError('Decimal is required')
 
 
 # TODO: validate URL
