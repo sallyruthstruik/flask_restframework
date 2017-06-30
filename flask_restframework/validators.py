@@ -61,7 +61,11 @@ class UniqueValidator(BaseValidator):
 
         """
         super(UniqueValidator, self).__init__(**k)
-        self.qs = qs
+        self._qs = qs
+
+    @property
+    def qs(self):
+        return self._qs() if callable(self._qs) else self._qs
 
     def __call__(self, field, value):
         try:

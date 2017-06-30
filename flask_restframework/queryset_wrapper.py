@@ -1,5 +1,6 @@
 #coding: utf8
 from mongoengine.base.document import BaseDocument
+from mongoengine.document import Document
 from mongoengine.queryset.queryset import QuerySet
 from pymongo.cursor import Cursor
 
@@ -30,14 +31,24 @@ class InstanceWrapper(object):
         """
         raise NotImplementedError
 
+    def delete(self):
+        """
+        Should delete this instance
+        """
+        raise NotImplementedError
+
 
 class MongoInstanceWrapper(InstanceWrapper):
+    item = None #type: Document
+
+    def delete(self):
+        self.item.delete()
 
     def to_dict(self):
         return self.item.to_mongo()
 
     def get_id(self):
-        return self.item.id
+        return self.item.pk
 
     def update(self, validated_data):
         for key, value in validated_data.items():

@@ -100,6 +100,20 @@ class BaseSerializer:
 
         self._bind_self_to_fields()
 
+    @classmethod
+    def from_queryset(cls, qs, context=None):
+        """
+        Allows to instantiate serializer from queryset. Automatically wraps
+        queryset to QuerysetWrapper
+
+        :param qs:
+        :return:
+        """
+        return cls(
+            QuerysetWrapper.from_queryset(qs),
+            context
+        )
+
     def get_fields(self):
         """
         returns mapping: <fieldName>: <Field>

@@ -44,7 +44,7 @@ class BaseField(object):
 
         if mongoEngineField.unique:
             model = mongoEngineField.owner_document
-            validators.append(UniqueValidator(qs=model.objects.all()))
+            validators.append(UniqueValidator(qs=lambda: model.objects.all()))
 
         args, kwargs = tuple(), dict(
             required=mongoEngineField.required,
@@ -351,6 +351,9 @@ class PrimaryKeyRelatedField(BaseRelatedField):
         return value
 
     def to_json(self, value):
+        if not value:
+            return value
+
         if isinstance(value, DBRef):
             return str(value.id)
         return str(value)

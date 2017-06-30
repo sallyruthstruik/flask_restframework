@@ -189,10 +189,11 @@ class UpdateMixin:
 class DeleteMixin:
     def delete_object(self, request, pk):
         instance = self.get_instance(pk)
-        id = instance.id
+        assert isinstance(instance, InstanceWrapper)
+        id = instance.get_id()
         instance.delete()
 
-        return jsonify({"id": id})
+        return jsonify({"id": str(id)})
 
 
 class ModelResource(GenericResource,
