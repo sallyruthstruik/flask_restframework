@@ -100,7 +100,7 @@ class BaseField(object):
                 return value
 
         for customVal in self._validators:
-            customVal(self, value)
+            value = customVal(self, value)
 
         if value is not None:
             value = self.validate(value)
