@@ -23,7 +23,8 @@ class InstanceWrapper(object):
 
     def get_field(self, key):
         """
-        Возвращает значение поля key для обернутой записи
+        Возвращает значение поля key для обернутой записи.
+        Должен поддерживать __ Django нотацию
         """
         raise NotImplementedError
 
@@ -113,7 +114,15 @@ class CursorInstanceWrapper(InstanceWrapper):
     def get_field(self, key):
         if key == "id":
             key = "_id"
-        out = self.item.get(key)
+
+        out = self.item
+
+        for part in key.split("__"):
+            try:
+                out = out.get(part)
+            except:
+                return None
+
         if isinstance(out, dict):
             return CursorInstanceWrapper(out)
         if isinstance(out, list):

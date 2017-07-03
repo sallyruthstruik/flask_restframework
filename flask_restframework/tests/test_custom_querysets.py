@@ -117,5 +117,15 @@ def test_join_data(app, complex_doc):
     }
 
 
+@pytest.mark.test_serialize_embedded
+def test_serialize_embedded(app, complex_doc):
+    class S(ModelSerializer):
+        field = fields.ForeignKeyField("inner__value")
+        class Meta:
+            model = Doc
+            fields = ("field", )
 
+    assert S(QuerysetWrapper.from_queryset(Doc._get_collection().find())).serialize() == [{
+        "field": "3"
+    }]
 
