@@ -4,7 +4,7 @@ import decimal
 from bson.dbref import DBRef
 from flask import json
 
-from flask.ext.restframework.queryset_wrapper import InstanceWrapper, QuerysetWrapper
+from flask.ext.restframework.queryset_wrapper import InstanceWrapper, QuerysetWrapper, MongoInstanceWrapper
 from flask_restframework.utils.util import wrap_mongoengine_errors
 from flask_restframework.validators import UniqueValidator
 from flask_restframework.validators import BaseValidator
@@ -363,6 +363,8 @@ class PrimaryKeyRelatedField(BaseRelatedField):
 
         if isinstance(value, DBRef):
             return str(value.id)
+        elif isinstance(value, InstanceWrapper):
+            return str(value.get_id())
         return str(value)
 
     def validate(self, value):

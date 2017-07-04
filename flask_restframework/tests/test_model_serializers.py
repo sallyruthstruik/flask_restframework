@@ -109,3 +109,14 @@ def test_embedded_inner_serialization(main_record):
             "value1": "3"
         }]
     )
+
+@pytest.mark.test_reference_serialization
+def test_reference_serialization(main_record):
+
+    class Serializer(ModelSerializer):
+        class Meta:
+            model = Main
+
+    d = Serializer.from_queryset(Main.objects.all()).serialize()
+    assert d[0]["related_inner"] == str(main_record.related_inner.id)
+    assert d[0]["related_list_inner"] == list(map(lambda i: str(i.id), main_record.related_list_inner))
