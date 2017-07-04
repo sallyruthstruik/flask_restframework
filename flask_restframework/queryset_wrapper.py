@@ -177,10 +177,6 @@ class QuerysetWrapper(object):
         for item in self.data:
             yield self.wrapperType(item)
 
-    @classmethod
-    def from_instance(cls, value):
-        return DummyQuerySet(value)
-
     def count(self):
         """
         Should return total count of items in QuerySet
@@ -200,19 +196,24 @@ class QuerysetWrapper(object):
         """
         raise NotImplementedError
 
+    def order_by(self, *ordering):
+        #type: (list[str])->QuerysetWrapper
+        """
+        Should return ordered queryset.
 
-class DummyQuerySet(QuerysetWrapper):
+        :param ordering: list of fields: "field" for ASC, "-field" for DESC
+        """
+        raise NotImplementedError
 
-    def __init__(self, item):
-        self.data = [item]
-
-    def get_data(self):
-        return self.data
 
 class MongoDbQuerySet(QuerysetWrapper):
     """
     Обертка для MongoEngine Queryset
     """
+
+    def order_by(self, *ordering):
+        return MongoDbQuerySet(self.data.order_by(*ordering), self.wrapperType)
+
     def filter_by(self, **filters):
         return MongoDbQuerySet(self.data.filter(**filters), self.wrapperType)
 

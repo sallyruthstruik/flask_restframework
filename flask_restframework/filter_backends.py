@@ -1,5 +1,7 @@
 import json
 
+from flask.ext.restframework.queryset_wrapper import MongoDbQuerySet
+
 
 class BaseBackend:
 
@@ -63,7 +65,12 @@ class JsonFilterBackend(BaseBackend):
     You can manage filter logig with Resource attribute update_json_filter which accepts
     (json_filter)->new_json_filter
 
+    .. warning::
+
+        This filter can be used only with :class:`.MongoDbQuerySet`
+
     """
+    qs = None   #type: MongoDbQuerySet
 
     def filter(self):
         try:
@@ -72,10 +79,12 @@ class JsonFilterBackend(BaseBackend):
         except:
             return self.qs
 
+        assert isinstance(self.qs, MongoDbQuerySet)
+
         if hasattr(self.resource, "update_json_filter"):
             json_filter = self.resource.__class__.update_json_filter(json_filter)
 
-        self.qs = self.qs.filter(__raw__=json_filter)
+        self.qs = MongoDbQuerySet.from_queryset(self.qs.data.filter(__raw__=json_filter))
 
         return self.qs
 
