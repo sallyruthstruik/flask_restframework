@@ -5,7 +5,8 @@ To enable middlewares support you should register, for example::
     AuthenticationMiddleware.register(app)
 
 """
-from flask import request
+from flask import globals as g
+from flask.wrappers import Response
 
 
 class BaseMiddleware(object):
@@ -15,21 +16,27 @@ class BaseMiddleware(object):
 
     def get_view(self):
         """
-        Returns view which will process current request
+        Returns view which will process current request.
 
-        :rtype: func
+        If this is 404 request, will return None.
         """
-        return self.app.view_functions[request.url_rule.endpoint]
+        try:
+            return self.app.view_functions.get(g.request.url_rule.endpoint)
+        except:
+            return None
 
     def before_request(self):
         """
-        It will be called before request
+        It will be called before request.
+
+        This function **must** return None or :class:`flask.wrappers.Response` object.
+        If Response is returned, request processing stops and Response will be returned
         """
         pass
 
     def after_request(self, response):
         """
-        It will be called after request
+        It will be called after request.
         """
         return response
 
@@ -50,8 +57,9 @@ class AuthenticationMiddleware(BaseMiddleware):
         if hasattr(view, "authentication_backends"):
             return view.authentication_backends
 
-        return self.app.config.get("FLASK_REST", {
-        }).get("AUTHENTICATION_BACKENDS", [])
+        return self.app.config.get(
+            "FLASK_REST", {}
+        ).get("AUTHENTICATION_BACKENDS", [])
 
     def before_request(self):
         user = None
@@ -61,11 +69,17 @@ class AuthenticationMiddleware(BaseMiddleware):
             return None
 
         for backendCls in authBackends:
-            user = backendCls(self.app).get_user(request)
+            user = backendCls(self.app).get_user(g.request)
 
             if user:
-                request.user = user
+                g.request.user = user
                 return
 
-        return "Authentication fails", 401
+        return Response(
+            response="Authentication fails",
+            status=401,
+            headers={
+                'WWW-Authenticate': 'Basic realm="User Visible Realm"'
+            }
+        )
 
