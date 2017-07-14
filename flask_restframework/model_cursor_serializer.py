@@ -1,4 +1,4 @@
-from flask.ext.restframework.serializer.model_serializer import ModelSerializer
+from flask_restframework.serializer.model_serializer import ModelSerializer
 
 
 class ModelCursorSerializer(ModelSerializer):

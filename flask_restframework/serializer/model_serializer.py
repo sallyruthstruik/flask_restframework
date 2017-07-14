@@ -1,7 +1,8 @@
 import six
 from mongoengine.document import Document
 
-from flask.ext.restframework.queryset_wrapper import InstanceWrapper, MongoInstanceWrapper
+from flask_restframework.model_wrapper import BaseModelWrapper, BaseFieldWrapper
+from flask_restframework.queryset_wrapper import InstanceWrapper, MongoInstanceWrapper
 from flask_restframework.serializer.base_serializer import BaseSerializer, _BaseSerializerMetaClass
 
 
@@ -23,19 +24,21 @@ class _ModelSerializerMetaclass(_BaseSerializerMetaClass):
                 attrs["Meta"].fields = tuple(set(attrs["Meta"].fields).union(declared.keys()))
 
         try:
-            model = attrs["Meta"].model
-        except:
+            model = BaseModelWrapper.fromModel(attrs["Meta"].model)
+        except AttributeError:
             raise TypeError("You should define Meta class with model attribute")
 
         fieldsFromModel = {}
+        assert isinstance(model, BaseModelWrapper)
 
-        for key, fieldCls in six.iteritems(model_meta.get_fields(model)):
-            if fieldCls not in cls.field_mapping:
-                raise ValueError("No mapping for field {}".format(fieldCls))
+        for key, wrappedField in model.get_fields().items():
+            assert isinstance(wrappedField, BaseFieldWrapper)
 
-            fieldsFromModel[key] = cls.field_mapping[fieldCls].from_mongoengine_field(
-                model_meta.get_field(model, key)
-            )
+            #TODO: сделать проверку
+            # if fieldCls not in cls.field_mapping:
+            #     raise ValueError("No mapping for field {}".format(fieldCls))
+
+            fieldsFromModel[key] = wrappedField.get_serializer_field(key)
 
         fieldsFromModel.update(declared)
 
@@ -61,14 +64,19 @@ class ModelSerializer(BaseSerializer):
     """
 
     def get_model(self):
+        #type: ()->BaseModelWrapper
+        """
+        Returns BaseModelWrapper for serializer-defined model.
+        """
+
         try:
-            return self.Meta.model
+            return BaseModelWrapper.fromModel(self.Meta.model)
         except:
             raise ValueError("You should specify Meta class with model attribute")
 
     def create(self, validated_data):
         "Performs create instance. Returns wrapped model intance"
-        return MongoInstanceWrapper(self.get_model().objects.create(**validated_data))
+        return InstanceWrapper.from_instance(self.get_model().create(**validated_data))
 
     def update(self, instance, validated_data):
         #type: (InstanceWrapper, dict)->InstanceWrapper

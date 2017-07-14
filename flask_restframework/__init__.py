@@ -9,9 +9,12 @@ Serializer API
 .. automodule:: flask_restframework.queryset_wrapper
     :members:
 
+.. automodule:: flask_restframework.model_wrapper
+    :members:
+
 """
 __author__ = 'stas'
-__version__ = "0.0.33"
+__version__ = "0.0.34"
 
 from flask_restframework.serializer import BaseSerializer
 from flask_restframework.serializer.model_serializer import ModelSerializer

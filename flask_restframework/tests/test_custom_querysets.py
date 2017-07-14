@@ -1,7 +1,7 @@
 import json
 
-from flask.ext.restframework.queryset_wrapper import QuerysetWrapper
-from flask.ext.restframework.tests.compat import mock
+from flask_restframework.queryset_wrapper import QuerysetWrapper
+from flask_restframework.tests.compat import mock
 
 import mongoengine as m
 import pytest

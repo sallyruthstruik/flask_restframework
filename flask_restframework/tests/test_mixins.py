@@ -1,10 +1,10 @@
 import pytest
 
-from flask.ext.restframework.model_resource import ModelResource
-from flask.ext.restframework.serializer.model_serializer import ModelSerializer
+from flask_restframework.model_resource import ModelResource
+from flask_restframework.serializer.model_serializer import ModelSerializer
 import mongoengine as m
 
-from flask.ext.restframework.tests.compat import mock
+from flask_restframework.tests.compat import mock
 
 
 class SimpleModel(m.Document):

@@ -4,7 +4,7 @@ import decimal
 from bson.dbref import DBRef
 from flask import json
 
-from flask.ext.restframework.queryset_wrapper import InstanceWrapper, QuerysetWrapper, MongoInstanceWrapper
+from flask_restframework.queryset_wrapper import InstanceWrapper, QuerysetWrapper, MongoInstanceWrapper
 from flask_restframework.utils.util import wrap_mongoengine_errors
 from flask_restframework.validators import UniqueValidator
 from flask_restframework.validators import BaseValidator
@@ -222,6 +222,15 @@ class DateTimeField(BaseField):
             return datetime.datetime.strptime(value, self._format)
         except:
             raise ValidationError("Incorrect DateTime string for {} format".format(self._format))
+
+class DateField(DateTimeField):
+
+    def __init__(self, format="%Y-%m-%d", **k):
+        super(DateField, self).__init__(format, **k)
+
+    def validate(self, value):
+        out = super(DateField, self).validate(value)
+        return out.date()
 
 
 class MongoEngineIdField(BaseField):

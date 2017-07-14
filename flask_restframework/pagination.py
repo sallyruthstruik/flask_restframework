@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from flask.ext.restframework.queryset_wrapper import QuerysetWrapper
+from flask_restframework.queryset_wrapper import QuerysetWrapper
 
 PageInfo = namedtuple("PageInfo", ["page", "page_size"])
 

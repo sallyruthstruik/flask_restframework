@@ -1,8 +1,11 @@
 #coding: utf8
+from flask.ext.sqlalchemy import Model
+from flask.globals import current_app
 from mongoengine.base.document import BaseDocument
 from mongoengine.document import Document
 from mongoengine.queryset.queryset import QuerySet
 from pymongo.cursor import Cursor
+
 
 
 class InstanceWrapper(object):
@@ -52,6 +55,8 @@ class InstanceWrapper(object):
             return MongoInstanceWrapper(item)
         elif isinstance(item, dict):
             return CursorInstanceWrapper
+        elif isinstance(item, Model):
+            return SqlAlchemyInstanceWrapper(item)
 
         raise TypeError("Incorrect type {}".format(type(item)))
 
@@ -76,7 +81,6 @@ class MongoInstanceWrapper(InstanceWrapper):
 
         self.item.save()
 
-
     def get_field(self, key):
         out = self.item
 
@@ -97,6 +101,51 @@ class MongoInstanceWrapper(InstanceWrapper):
                     r.append(item)
 
             return r
+
+        return out
+
+
+class SqlAlchemyInstanceWrapper(InstanceWrapper):
+
+    __db = None
+    @property
+    def db(self):
+        from flask_restframework.model_wrapper import SqlAlchemyModelWrapper
+
+        if self.__db is None:
+            self.__db = SqlAlchemyModelWrapper.db
+
+        return self.__db
+
+    def update(self, validated_data):
+        for key, value in validated_data.items():
+            setattr(self.item, key, value)
+
+        self.db.add(self.item)
+        self.db.commit()
+
+    def get_id(self):
+        return self.item.id
+
+    def delete(self):
+        self.db.delete(self.item)
+        self.db.commit()
+
+    def to_dict(self):
+        return {
+            key: value
+            for key, value in self.item.__dict__.items()
+            if not key.startswith("_")
+        }
+
+    def get_field(self, key):
+        out = self.item
+
+        for part in key.split("__"):
+            try:
+                out = getattr(out, part)
+            except:
+                return None
 
         return out
 
@@ -245,4 +294,21 @@ class CursorQuerySet(QuerysetWrapper):
 
     def slice(self, frm, to):
         return self.data[frm: to]
+
+
+class SqlAlchemyQuerySet(QuerysetWrapper):
+    def slice(self, frm, to):
+        pass
+
+    def get(self, id):
+        pass
+
+    def count(self):
+        pass
+
+    def filter_by(self, **filters):
+        pass
+
+    def order_by(self, *ordering):
+        pass
 

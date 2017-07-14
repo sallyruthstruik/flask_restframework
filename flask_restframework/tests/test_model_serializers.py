@@ -4,7 +4,7 @@ from flask_mongoengine import MongoEngine
 from mongoengine import fields as mfields
 from pymongo.database import Database
 
-from flask.ext.restframework.queryset_wrapper import QuerysetWrapper
+from flask_restframework.queryset_wrapper import QuerysetWrapper
 from flask_restframework import fields
 from flask_restframework.serializer.model_serializer import ModelSerializer
 

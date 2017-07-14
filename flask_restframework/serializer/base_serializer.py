@@ -3,7 +3,7 @@ import six as six
 from mongoengine.queryset.queryset import QuerySet
 from werkzeug.exceptions import BadRequest
 
-from flask.ext.restframework.queryset_wrapper import QuerysetWrapper, InstanceWrapper
+from flask_restframework.queryset_wrapper import QuerysetWrapper, InstanceWrapper
 from flask_restframework.fields import BaseRelatedField
 from flask_restframework.fields import ForeignKeyField
 
@@ -366,7 +366,7 @@ class BaseSerializer:
         out = {}
 
         for key, value in self.get_fields().items():
-            assert isinstance(value, BaseField)
+            assert isinstance(value, BaseField), value
 
             out[key] = value.to_json(value.get_value_from_model_object(item, key))
 

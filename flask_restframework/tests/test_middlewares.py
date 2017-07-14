@@ -3,9 +3,9 @@ import base64
 import pytest
 from flask.wrappers import Response
 
-from flask.ext.restframework.authentication_backend import SimpleBasicAuth
-from flask.ext.restframework.middlewares import AuthenticationMiddleware
-from flask.ext.restframework.tests.compat import mock
+from flask_restframework.authentication_backend import SimpleBasicAuth
+from flask_restframework.middlewares import AuthenticationMiddleware
+from flask_restframework.tests.compat import mock
 
 
 @pytest.mark.test_auth_middleware_with_basic_auth
