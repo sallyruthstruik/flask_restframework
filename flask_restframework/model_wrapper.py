@@ -61,8 +61,9 @@ class BaseFieldWrapper(object):
     """
     field_mapping = mongoengine_model_meta.FIELD_MAPPING
 
-    def __init__(self, field):
+    def __init__(self, field, modelClass):
         self.field = field
+        self.model = modelClass
 
     def get_serializer_field(self, key):
         """
@@ -101,7 +102,7 @@ class MongoEngineFieldWrapper(BaseFieldWrapper):
         )
 
         if issubclass(serializerFieldCls, fields.ListField):
-            kwargs["innerField"] = MongoEngineFieldWrapper(self.field.field).get_serializer_field(None)
+            kwargs["innerField"] = MongoEngineFieldWrapper(self.field.field, self.model).get_serializer_field(None)
 
         if issubclass(serializerFieldCls, fields.PrimaryKeyRelatedField):
             related_model = self.field.document_type
@@ -141,10 +142,15 @@ class SqlAlchemyFieldWrapper(BaseFieldWrapper):
 
         assert issubclass(serializerFieldCls, BaseField)
 
+        validators = []
+        if self.field.unique:
+            validators.append(UniqueValidator(self.model.query))
+
         return serializerFieldCls(
             blank=self.field.nullable,
             required=not self.field.nullable,
-            read_only=self.field.primary_key
+            read_only=self.field.primary_key,
+            validators=validators
         )
 
 
@@ -156,7 +162,7 @@ class MongoEngineModelWrapper(BaseModelWrapper):
     def get_fields(self):
         out = {}
         for key, value in six.iteritems(self.modelClass._fields):
-            out[key] = MongoEngineFieldWrapper(value)
+            out[key] = MongoEngineFieldWrapper(value, self.modelClass)
 
         return out
 
@@ -180,7 +186,7 @@ class SqlAlchemyModelWrapper(BaseModelWrapper):
     def get_fields(self):
         # type: ()->dict[str, BaseFieldWrapper]
         return {
-            key: SqlAlchemyFieldWrapper(value)
+            key: SqlAlchemyFieldWrapper(value, self.modelClass)
             for key, value in self.modelClass.__table__.columns.items()
         }
 

@@ -67,7 +67,11 @@ setup(
     author_email='staskaledin@gmail.com',
     packages=get_packages('flask_restframework'),
     package_data=get_package_data('flask_restframework'),
-    install_requires=[],
+    install_requires=[
+        "flask-sqlalchemy",
+        "mongoengine==0.*",
+        "flask"
+    ],
     zip_safe=False,
     classifiers=[
         'Development Status :: 3 - Alpha',

@@ -1,5 +1,5 @@
 #coding: utf8
-from flask.ext.sqlalchemy import Model
+from flask.ext.sqlalchemy import Model, BaseQuery
 from flask.globals import current_app
 from mongoengine.base.document import BaseDocument
 from mongoengine.document import Document
@@ -208,6 +208,8 @@ class QuerysetWrapper(object):
             return cls.from_queryset(qs())
         elif isinstance(qs, QuerysetWrapper):
             return qs
+        elif isinstance(qs, BaseQuery):
+            return SqlAlchemyQuerySet(qs, SqlAlchemyInstanceWrapper)
 
         raise TypeError("Unknown type {}".format(type(qs)))
 
@@ -239,6 +241,7 @@ class QuerysetWrapper(object):
         raise NotImplementedError
 
     def filter_by(self, **filters):
+        #type: ()->QuerysetWrapper
         """
         Should filter queryset by filters (Django style filtering)
         Returns new queryset
@@ -254,11 +257,20 @@ class QuerysetWrapper(object):
         """
         raise NotImplementedError
 
+    def first(self):
+        """
+        Should return first element of queryset or None
+        """
+        raise NotImplementedError
+
 
 class MongoDbQuerySet(QuerysetWrapper):
     """
     Обертка для MongoEngine Queryset
     """
+
+    def first(self):
+        return self.data.first()
 
     def order_by(self, *ordering):
         return MongoDbQuerySet(self.data.order_by(*ordering), self.wrapperType)
@@ -295,8 +307,12 @@ class CursorQuerySet(QuerysetWrapper):
     def slice(self, frm, to):
         return self.data[frm: to]
 
-
 class SqlAlchemyQuerySet(QuerysetWrapper):
+    def first(self):
+        item = self.data.first()
+        if item:
+            return SqlAlchemyInstanceWrapper(item)
+
     def slice(self, frm, to):
         pass
 
@@ -307,7 +323,24 @@ class SqlAlchemyQuerySet(QuerysetWrapper):
         pass
 
     def filter_by(self, **filters):
-        pass
+        f = []
+
+        model = self.data._primary_entity.entity_zero._identity_class
+
+        for key, value in filters.items():
+            clause = "eq"
+            if "__" in key:
+                key, clause = key.split("__")
+
+            if clause == "eq":
+                f.append(getattr(model, key) == value)
+            elif clause == "ne":
+                f.append(getattr(model, key) == value)
+            else:
+                raise TypeError("Unknown clause {} for key {}".format(clause, key))
+
+        return SqlAlchemyQuerySet(self.data.filter(*f), SqlAlchemyInstanceWrapper)
+
 
     def order_by(self, *ordering):
         pass

@@ -1,5 +1,6 @@
 import re
 
+from flask.ext.restframework.queryset_wrapper import QuerysetWrapper
 from flask_restframework.exceptions import ValidationError
 
 class BaseValidator(object):
@@ -61,7 +62,7 @@ class UniqueValidator(BaseValidator):
 
         """
         super(UniqueValidator, self).__init__(**k)
-        self._qs = qs
+        self._qs = QuerysetWrapper.from_queryset(qs)
 
     @property
     def qs(self):
@@ -74,12 +75,13 @@ class UniqueValidator(BaseValidator):
             instance = None
 
         qs = self.qs
+        assert isinstance(qs, QuerysetWrapper)
         if instance:
-            qs = qs.filter(id__ne=instance.get_id())
+            qs = qs.filter_by(id__ne=instance.get_id())
 
         fieldname = field.fieldname
 
-        qs = qs.filter(**{fieldname: value})
+        qs = qs.filter_by(**{fieldname: value})
 
         if qs.first():
             self.raise_error(value=value)

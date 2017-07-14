@@ -1,3 +1,4 @@
+#coding: utf8
 import six
 from mongoengine.document import Document
 
