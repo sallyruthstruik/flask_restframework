@@ -50,7 +50,10 @@ class GenericResource(BaseResource):
     def get_adaptated_queryset(self):
         # type: ()->QuerysetWrapper
         qs = self.get_queryset()
-        return QuerysetWrapper.from_queryset(qs)
+
+        if not isinstance(qs, QuerysetWrapper):
+            return QuerysetWrapper.from_queryset(qs)
+        return qs
 
     def get_instance(self, pk):
         # type: ()->InstanceWrapper

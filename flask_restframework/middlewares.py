@@ -83,3 +83,14 @@ class AuthenticationMiddleware(BaseMiddleware):
             }
         )
 
+class CorsMiddleware(BaseMiddleware):
+    """
+    Добавляет Cross origin хидеры к ответу
+    """
+
+    def after_request(self, response):
+        #type: (Response)->Response
+        response.headers["Access-Control-Allow-Origin"] = "*"
+
+        return response
+

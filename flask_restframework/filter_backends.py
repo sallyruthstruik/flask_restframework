@@ -1,11 +1,15 @@
 import json
 
-from flask_restframework.queryset_wrapper import MongoDbQuerySet
+from flask.wrappers import Request
+
+from flask_restframework.queryset_wrapper import MongoDbQuerySet, QuerysetWrapper
+from flask_restframework.resource import BaseResource
 
 
 class BaseBackend:
 
     def __init__(self, qs, request, resource):
+        #type: (QuerysetWrapper, Request, BaseResource)->None
         self.qs = qs
         self.request = request
         self.resource = resource
@@ -113,3 +117,20 @@ class SearchFilterBackend(BaseBackend):
             self.qs = self.qs.filter(__raw__={"$text": {"$search": search_text}})
 
         return self.qs
+
+class DefaultFilterBackend(BaseBackend):
+
+    def filter(self):
+        return self.qs.filter_by(
+            **self._get_filters()
+        )
+
+    def _get_filters(self):
+        output = {}
+        for key, value in self.request.args.items():
+            if not key.startswith("_") and key not in [
+                "ordering"
+            ] and value:
+                output[key] = value
+
+        return output

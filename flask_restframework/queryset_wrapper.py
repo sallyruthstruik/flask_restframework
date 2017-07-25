@@ -1,11 +1,11 @@
 #coding: utf8
-from flask.ext.sqlalchemy import Model, BaseQuery
+from flask.ext.sqlalchemy import Model, BaseQuery, _BoundDeclarativeMeta
 from flask.globals import current_app
 from mongoengine.base.document import BaseDocument
 from mongoengine.document import Document
 from mongoengine.queryset.queryset import QuerySet
 from pymongo.cursor import Cursor
-
+from sqlalchemy.sql.expression import desc
 
 
 class InstanceWrapper(object):
@@ -196,6 +196,16 @@ class QuerysetWrapper(object):
         self.data = data
 
     @classmethod
+    def from_model(cls, modelCls):
+        from flask_restframework.model_wrapper import SqlAlchemyModelWrapper
+        if isinstance(modelCls, Document):
+            return cls.from_queryset(modelCls.objects.all())
+        elif isinstance(modelCls, (Model, _BoundDeclarativeMeta)):
+            return cls.from_queryset(modelCls.query)
+        else:
+            raise TypeError(type(modelCls))
+
+    @classmethod
     def from_queryset(cls, qs):
         """
         Returns wrapped queryset from passed qs
@@ -314,18 +324,18 @@ class SqlAlchemyQuerySet(QuerysetWrapper):
             return SqlAlchemyInstanceWrapper(item)
 
     def slice(self, frm, to):
-        pass
+        return SqlAlchemyQuerySet(self.data.limit(to-frm).offset(frm), SqlAlchemyInstanceWrapper)
 
     def get(self, id):
-        pass
+        return self.data.get(id=id)
 
     def count(self):
-        pass
+        return self.data.count()
 
     def filter_by(self, **filters):
         f = []
 
-        model = self.data._primary_entity.entity_zero._identity_class
+        model = self._get_model()
 
         for key, value in filters.items():
             clause = "eq"
@@ -341,7 +351,17 @@ class SqlAlchemyQuerySet(QuerysetWrapper):
 
         return SqlAlchemyQuerySet(self.data.filter(*f), SqlAlchemyInstanceWrapper)
 
+    def _get_model(self):
+        return self.data._primary_entity.entity_zero._identity_class
 
     def order_by(self, *ordering):
-        pass
+        l = []
+        model = self._get_model()
+        for col in ordering:
+            if col[0] == "-":
+                l.append(desc(getattr(model, col.lstrip("-"))))
+            else:
+                l.append(getattr(model, col))
+
+        return SqlAlchemyQuerySet(self.data.order_by(*l), SqlAlchemyInstanceWrapper)
 

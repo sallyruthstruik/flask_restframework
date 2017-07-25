@@ -1,14 +1,9 @@
 __author__ = 'stas'
 
-class BaseException(Exception):
+class BaseRestException(Exception):
 
     status = 500
     name = "Server Error"
-
-class ValidationError(BaseException):
-
-    status = 400
-    name = "Validation Error"
 
     def __init__(self, data):
         """
@@ -16,11 +11,21 @@ class ValidationError(BaseException):
         """
         self.data = data
 
-class AuthorizationError(BaseException):
+class ValidationError(BaseRestException):
+
+    status = 400
+    name = "Validation Error"
+
+class AuthorizationError(BaseRestException):
     status = 401
     name = "Not authorized"
 
 
-class NotFound(BaseException):
+class NotFound(BaseRestException):
     status = 404
     name = "Not Found"
+
+class ReturnResponseException(BaseRestException):
+    def __init__(self, data, status=200):
+        super(ReturnResponseException, self).__init__(data)
+        self.status = status

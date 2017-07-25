@@ -1,0 +1,33 @@
+<div class="panel panel-default">
+  <div class="panel-heading" (click)="showFilters = !showFilters">
+    <h3 class="panel-title">Фильтры</h3>
+  </div>
+  <div class="panel-body" *ngIf="showFilters">
+    <form class="form-horizontal" role="form">
+      <div class="form-group" *ngFor="let col of filter_columns">
+        <label for="{{col}}" class="control-label col-sm-1">{{col}}</label>
+        <div class="col-md-3">
+          <input type="text" class="form-control" id="{{col}}"
+                 name="col"
+                 (change)="onInputChange(col, $event)"
+                 value="{{filters[col]}}">
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<table class="table table-striped table-bordered">
+  <thead>
+    <tr>
+      <th *ngFor="let col of columns" (click)="changeOrdering(col)">{{col}}</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let item of data">
+      <td *ngFor="let col of columns">
+        {{item[col]}}
+      </td>
+    </tr>
+  </tbody>
+</table>

@@ -23,7 +23,7 @@ class ExceptionHandler:
 
         {
           "code": 500,
-          "description": "exceptions must derive from BaseException",
+          "description": "exceptions must derive from BaseRestException",
           "error": "TypeError"
         }
 

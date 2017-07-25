@@ -1,6 +1,6 @@
 import re
 
-from flask.ext.restframework.queryset_wrapper import QuerysetWrapper
+from flask_restframework.queryset_wrapper import QuerysetWrapper
 from flask_restframework.exceptions import ValidationError
 
 class BaseValidator(object):
