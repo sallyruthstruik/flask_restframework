@@ -129,7 +129,10 @@ class SqlAlchemyFieldWrapper(BaseFieldWrapper):
         sa.Integer: fields.IntegerField,
         sa.DateTime: fields.DateTimeField,
         sa.Date: fields.DateField,
-        sa.Boolean: fields.BooleanField
+        sa.Boolean: fields.BooleanField,
+        sa.Float: fields.FloatField,
+        sa.DECIMAL: fields.DecimalField,
+
     }
 
     def get_serializer_field(self, key):

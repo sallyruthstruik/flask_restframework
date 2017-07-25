@@ -198,9 +198,9 @@ class QuerysetWrapper(object):
     @classmethod
     def from_model(cls, modelCls):
         from flask_restframework.model_wrapper import SqlAlchemyModelWrapper
-        if isinstance(modelCls, Document):
+        if issubclass(modelCls, Document):
             return cls.from_queryset(modelCls.objects.all())
-        elif isinstance(modelCls, (Model, _BoundDeclarativeMeta)):
+        elif issubclass(modelCls, Model):
             return cls.from_queryset(modelCls.query)
         else:
             raise TypeError(type(modelCls))

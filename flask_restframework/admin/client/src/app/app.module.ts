@@ -7,6 +7,7 @@ import {IndexComponent} from "./index.component";
 import {Http, HttpModule} from "@angular/http";
 import {ResourceListComponent} from "./resource_list.component";
 import {FormsModule} from "@angular/forms";
+import {PaginationComponent} from "./pagination.component";
 
 const appRoutes: Routes = [
   {
@@ -29,7 +30,8 @@ const appRoutes: Routes = [
   declarations: [
     AppComponent ,
     IndexComponent,
-    ResourceListComponent
+    ResourceListComponent,
+    PaginationComponent
   ],
   bootstrap:    [ AppComponent ]
 })

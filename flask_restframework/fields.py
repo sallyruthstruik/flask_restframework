@@ -178,6 +178,15 @@ class IntegerField(BaseField):
         except:
             raise ValidationError("Integer is required")
 
+class FloatField(BaseField):
+    def to_python(self, value):
+        return value
+
+    def validate(self, value):
+        try:
+            return float(value)
+        except:
+            raise ValidationError("Float is required")
 
 class DecimalField(BaseField):
 

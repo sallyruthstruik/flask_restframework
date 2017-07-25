@@ -40,7 +40,7 @@ export class BackendService{
    * Возвращает данные с ресурса
    * @param name
    */
-  getDataFromResource(name: string, filters: any, ordering: string[]): Promise<any> {
+  getDataFromResource(name: string, filters: any, ordering: string[], page=1, page_size=50): Promise<any> {
 
     let prepareFilters: string[] = [];
 
@@ -53,7 +53,7 @@ export class BackendService{
       response=>response.filter(item=>item.name == name)[0]
     ).then(
       resourceItem=>this.http.get(
-        `${Constants.HOST}${resourceItem.url}?ordering=${ordering.join(",")}&${prepareFilters.join("&")}`
+        `${Constants.HOST}${resourceItem.url}?ordering=${ordering.join(",")}&${prepareFilters.join("&")}&page=${page}&page_size=${page_size}`
       ).toPromise()
     ).then(
       response=>response.json()

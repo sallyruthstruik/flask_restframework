@@ -16,10 +16,11 @@ export class ResourceListComponent implements OnInit{
   ordering: string[] = [];
   data: any[];
   showFilters = false;
+  page_size = 50;
+  page = 1;
+  pages = 1;
 
-  filters: any = {
-    country_code: "RU"
-  };
+  filters: any = {};
 
   ngOnInit(): void {
     console.log("NgOnInit");
@@ -33,9 +34,12 @@ export class ResourceListComponent implements OnInit{
 
   fetchData(){
     console.log(this.filters);
-    this.backendService.getDataFromResource(this.name, this.filters, this.ordering).then(
+    this.backendService.getDataFromResource(this.name, this.filters, this.ordering, this.page, this.page_size).then(
       data=>{
         this.data = data.results;
+        this.page = data.page;
+        this.page_size = data.page_size;
+        this.pages = data.pages;
         return this.data;
       }
     ).then(
@@ -79,6 +83,11 @@ export class ResourceListComponent implements OnInit{
     this.filters[column] = e.target.value;
     console.log(column, e, e.target.value);
     this.showFilters = false;
+    this.fetchData();
+  }
+
+  onPageChanged = (page: number)=>{
+    this.page = page;
     this.fetchData();
   }
 

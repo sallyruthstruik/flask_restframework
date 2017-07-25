@@ -129,7 +129,7 @@ class DefaultFilterBackend(BaseBackend):
         output = {}
         for key, value in self.request.args.items():
             if not key.startswith("_") and key not in [
-                "ordering"
+                "ordering", "page", "page_size"
             ] and value:
                 output[key] = value
 

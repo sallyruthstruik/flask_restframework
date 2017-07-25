@@ -33,6 +33,6 @@ def test_admin_register_resources(app, db):
         {"name": "doc", "url": '/admin/resource/doc'}
     ]
 
-    assert admin._registered_resources[-1].view_list_resource().json == [
+    assert admin._registered_resources[-1].view_list_resource().json["results"] == [
         {"field": "field", "id": str(doc.id)}
     ]
