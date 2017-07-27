@@ -3,11 +3,11 @@ import json
 import pytest
 from mongoengine.queryset.queryset import QuerySet
 
-from flask.ext.restframework.filter_backends import JsonFilterBackend, OrderingBackend
-from flask.ext.restframework.queryset_wrapper import MongoDbQuerySet
+from flask_restframework.filter_backends import JsonFilterBackend, OrderingBackend
+from flask_restframework.queryset_wrapper import MongoDbQuerySet
 import mongoengine as m
 
-from flask.ext.restframework.tests.compat import mock
+from flask_restframework.tests.compat import mock
 
 
 class Doc(m.Document):

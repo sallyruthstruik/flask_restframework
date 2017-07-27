@@ -3,7 +3,7 @@ import six as six
 from mongoengine.queryset.queryset import QuerySet
 from werkzeug.exceptions import BadRequest
 
-from flask.ext.restframework.queryset_wrapper import QuerysetWrapper, InstanceWrapper
+from flask_restframework.queryset_wrapper import QuerysetWrapper, InstanceWrapper
 from flask_restframework.fields import BaseRelatedField
 from flask_restframework.fields import ForeignKeyField
 

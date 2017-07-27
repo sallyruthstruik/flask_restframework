@@ -4,7 +4,7 @@ import decimal
 from bson.dbref import DBRef
 from flask import json
 
-from flask.ext.restframework.queryset_wrapper import InstanceWrapper, QuerysetWrapper, MongoInstanceWrapper
+from flask_restframework.queryset_wrapper import InstanceWrapper, QuerysetWrapper, MongoInstanceWrapper
 from flask_restframework.utils.util import wrap_mongoengine_errors
 from flask_restframework.validators import UniqueValidator
 from flask_restframework.validators import BaseValidator
@@ -398,6 +398,8 @@ class ListField(BaseField):
     def to_json(self, value):
         if value:
             return list(map(self.inner_serializer.to_json, value))
+
+        return value
 
     def validate(self, value):
         if not isinstance(value, list):

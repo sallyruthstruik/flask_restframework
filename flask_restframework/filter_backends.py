@@ -1,6 +1,6 @@
 import json
 
-from flask.ext.restframework.queryset_wrapper import MongoDbQuerySet
+from flask_restframework.queryset_wrapper import MongoDbQuerySet
 
 
 class BaseBackend:

@@ -7,8 +7,8 @@ from pprint import pprint
 import pytest
 from pymongo.database import Database
 
-from flask.ext.restframework.queryset_wrapper import QuerysetWrapper, MongoInstanceWrapper
-from flask.ext.restframework.tests.compat import mock
+from flask_restframework.queryset_wrapper import QuerysetWrapper, MongoInstanceWrapper
+from flask_restframework.tests.compat import mock
 
 
 import six

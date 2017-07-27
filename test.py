@@ -1,6 +1,6 @@
 import typing
 
-from flask.ext.restframework.queryset_wrapper import QuerysetWrapper
+from flask_restframework.queryset_wrapper import QuerysetWrapper
 from flask_restframework.model_resource import ModelResource
 from flask_restframework.serializer.model_serializer import ModelSerializer
 

@@ -5,9 +5,9 @@ import mongoengine as m
 import pytest
 from flask.app import Flask
 
-from flask.ext.restframework.model_resource import ModelResource
-from flask.ext.restframework.router import DefaultRouter
-from flask.ext.restframework.serializer.model_serializer import ModelSerializer
+from flask_restframework.model_resource import ModelResource
+from flask_restframework.router import DefaultRouter
+from flask_restframework.serializer.model_serializer import ModelSerializer
 
 class Model(m.Document):
     created = m.DateTimeField(default=datetime.datetime.now)

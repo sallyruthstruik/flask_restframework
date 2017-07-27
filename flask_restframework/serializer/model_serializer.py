@@ -1,7 +1,7 @@
 import six
 from mongoengine.document import Document
 
-from flask.ext.restframework.queryset_wrapper import InstanceWrapper, MongoInstanceWrapper
+from flask_restframework.queryset_wrapper import InstanceWrapper, MongoInstanceWrapper
 from flask_restframework.serializer.base_serializer import BaseSerializer, _BaseSerializerMetaClass
 
 

@@ -1,4 +1,4 @@
-from flask.ext.restframework.model_resource import GenericResource
+from flask_restframework.model_resource import GenericResource
 
 
 class GenericCursorResource(GenericResource):

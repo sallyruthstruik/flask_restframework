@@ -6,7 +6,7 @@ from flask.globals import current_app
 from flask.wrappers import Request
 from mongoengine.errors import DoesNotExist
 
-from flask.ext.restframework.queryset_wrapper import QuerysetWrapper, InstanceWrapper
+from flask_restframework.queryset_wrapper import QuerysetWrapper, InstanceWrapper
 from flask_restframework.serializer.base_serializer import BaseSerializer
 from flask_restframework.exceptions import NotFound
 from flask_restframework.filter_backends import BaseBackend
