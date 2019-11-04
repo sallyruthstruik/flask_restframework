@@ -1,5 +1,5 @@
 click==6.7
-Flask==0.12
+Flask==1.0
 flask-mongoengine==0.8.2
 Flask-WTF==0.14.2
 itsdangerous==0.24
