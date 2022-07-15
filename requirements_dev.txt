@@ -1,6 +1,6 @@
 -r requirements.txt
 coverage==4.3.4
-codecov==2.0.5
+codecov==2.0.16
 pytest==3.0.6
 pytest-cov==2.5.1
 pytest-flask==0.10.0
